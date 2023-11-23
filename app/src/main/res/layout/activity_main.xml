@@ -1,0 +1,229 @@
+<?xml version="1.0" encoding="utf-8"?>
+<androidx.constraintlayout.widget.ConstraintLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    tools:context=".MainActivity">
+
+    <androidx.core.widget.NestedScrollView
+        android:id="@+id/scroll_view"
+        android:layout_width="match_parent"
+        android:layout_height="0dp"
+        app:layout_constraintHeight_percent="0.5"
+        app:layout_constraintTop_toTopOf="parent">
+
+        <androidx.constraintlayout.widget.ConstraintLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:gravity="center_horizontal"
+            android:orientation="vertical">
+
+            <TextView
+                android:id="@+id/java"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:background="#f58219"
+                android:gravity="center"
+                android:minWidth="220dp"
+                android:minHeight="150dp"
+                android:text="Java"
+                android:textColor="@color/white"
+                app:layout_constraintBottom_toTopOf="@id/kotlin"
+                app:layout_constraintStart_toStartOf="parent"
+                app:layout_constraintTop_toTopOf="parent" />
+
+            <TextView
+                android:id="@+id/kotlin"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:background="#7f52ff"
+                android:gravity="center"
+                android:minWidth="220dp"
+                android:minHeight="150dp"
+                android:text="Kotlin"
+                android:textColor="@color/white"
+                app:layout_constraintBottom_toTopOf="@id/cpp"
+                app:layout_constraintStart_toStartOf="parent"
+                app:layout_constraintTop_toBottomOf="@id/java" />
+
+            <TextView
+                android:id="@+id/cpp"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:background="#211f1f"
+                android:gravity="center"
+                android:minWidth="220dp"
+                android:minHeight="150dp"
+                android:text="C++"
+                android:textColor="@color/white"
+                app:layout_constraintBottom_toBottomOf="parent"
+                app:layout_constraintStart_toStartOf="parent"
+                app:layout_constraintTop_toBottomOf="@id/kotlin" />
+
+            <TextView
+                android:id="@+id/compose"
+                android:layout_width="0dp"
+                android:layout_height="0dp"
+                android:background="#3ba0a1"
+                android:gravity="center"
+                android:text="Compose"
+                android:textColor="@color/white"
+                app:layout_constraintBottom_toTopOf="@id/jetpack"
+                app:layout_constraintEnd_toEndOf="parent"
+                app:layout_constraintStart_toEndOf="@id/java"
+                app:layout_constraintTop_toTopOf="@id/java" />
+
+            <TextView
+                android:id="@+id/jetpack"
+                android:layout_width="0dp"
+                android:layout_height="0dp"
+                android:background="#8BC34A"
+                android:gravity="center"
+                android:text="Jetpack"
+                android:textColor="@color/white"
+                app:layout_constraintBottom_toBottomOf="parent"
+                app:layout_constraintEnd_toEndOf="parent"
+                app:layout_constraintStart_toStartOf="@id/compose"
+                app:layout_constraintTop_toBottomOf="@id/compose" />
+
+            <TextView
+                android:id="@+id/anchor"
+                android:layout_width="80dp"
+                android:layout_height="40dp"
+                android:layout_gravity="center"
+                android:background="#009688"
+                android:gravity="center"
+                android:text="Hello World!"
+                android:textColor="@color/white"
+                app:layout_constraintBottom_toBottomOf="parent"
+                app:layout_constraintEnd_toEndOf="parent"
+                app:layout_constraintStart_toStartOf="parent"
+                app:layout_constraintTop_toTopOf="parent" />
+        </androidx.constraintlayout.widget.ConstraintLayout>
+    </androidx.core.widget.NestedScrollView>
+
+    <TextView
+        android:id="@+id/show_at_location"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="16dp"
+        android:background="#2196F3"
+        android:gravity="center"
+        android:minWidth="144dp"
+        android:minHeight="36dp"
+        android:text="showAtLocation"
+        android:textColor="@color/white"
+        app:layout_constraintEnd_toStartOf="@id/show_as_dropdown"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toBottomOf="@id/scroll_view" />
+
+    <TextView
+        android:id="@+id/show_as_dropdown"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="16dp"
+        android:background="#2196F3"
+        android:gravity="center"
+        android:minWidth="144dp"
+        android:minHeight="36dp"
+        android:text="showAsDropDown"
+        android:textColor="@color/white"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toEndOf="@id/show_at_location"
+        app:layout_constraintTop_toBottomOf="@id/scroll_view" />
+
+    <TextView
+        android:id="@+id/seekbar_x_desc"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginStart="16dp"
+        android:text="X Offset:"
+        android:textColor="#333333"
+        app:layout_constraintBottom_toBottomOf="@id/seekbar_x"
+        app:layout_constraintEnd_toStartOf="@id/seekbar_x"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toTopOf="@id/seekbar_x" />
+
+    <SeekBar
+        android:id="@+id/seekbar_x"
+        android:layout_width="0dp"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="16dp"
+        android:max="300"
+        android:min="-300"
+        android:minHeight="36dp"
+        app:layout_constraintBottom_toTopOf="@id/seekbar_y"
+        app:layout_constraintEnd_toStartOf="@id/seekbar_x_value"
+        app:layout_constraintStart_toEndOf="@id/seekbar_x_desc"
+        app:layout_constraintTop_toBottomOf="@id/show_at_location" />
+
+    <TextView
+        android:id="@+id/seekbar_x_value"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginEnd="16dp"
+        android:minWidth="32dp"
+        app:layout_constraintBottom_toBottomOf="@id/seekbar_x"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toEndOf="@id/seekbar_x"
+        app:layout_constraintTop_toTopOf="@id/seekbar_x" />
+
+    <TextView
+        android:id="@+id/seekbar_y_desc"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginStart="16dp"
+        android:text="Y Offset:"
+        android:textColor="#333333"
+        app:layout_constraintBottom_toBottomOf="@id/seekbar_y"
+        app:layout_constraintEnd_toStartOf="@id/seekbar_y"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toTopOf="@id/seekbar_y" />
+
+    <SeekBar
+        android:id="@+id/seekbar_y"
+        android:layout_width="0dp"
+        android:layout_height="wrap_content"
+        android:max="300"
+        android:min="-300"
+        android:minHeight="36dp"
+        app:layout_constraintBottom_toTopOf="@id/gravity"
+        app:layout_constraintEnd_toStartOf="@id/seekbar_y_value"
+        app:layout_constraintStart_toEndOf="@id/seekbar_y_desc"
+        app:layout_constraintTop_toBottomOf="@id/seekbar_x" />
+
+    <TextView
+        android:id="@+id/seekbar_y_value"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginEnd="16dp"
+        android:minWidth="32dp"
+        app:layout_constraintBottom_toBottomOf="@id/seekbar_y"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toEndOf="@id/seekbar_y"
+        app:layout_constraintTop_toTopOf="@id/seekbar_y" />
+
+    <TextView
+        android:id="@+id/gravity"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginStart="16dp"
+        android:gravity="center_vertical"
+        android:minHeight="36dp"
+        android:text="Gravity:"
+        android:textColor="#333333"
+        app:layout_constraintEnd_toStartOf="@id/seekbar_y"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toBottomOf="@id/seekbar_y" />
+
+    <androidx.recyclerview.widget.RecyclerView
+        android:id="@+id/recycler_view"
+        android:layout_width="0dp"
+        android:layout_height="0dp"
+        android:layout_marginBottom="16dp"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintEnd_toEndOf="@id/seekbar_y"
+        app:layout_constraintStart_toEndOf="@id/gravity"
+        app:layout_constraintTop_toTopOf="@id/gravity" />
+</androidx.constraintlayout.widget.ConstraintLayout>
