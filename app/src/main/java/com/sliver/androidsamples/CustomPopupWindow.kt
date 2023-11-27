@@ -52,8 +52,15 @@ open class CustomPopupWindow<T : ViewBinding>(context: Context) : PopupWindow(co
     private fun createBinding(context: Context): T {
         val superClass = this.javaClass.genericSuperclass as ParameterizedType
         val bindingClass = superClass.actualTypeArguments[0] as Class<*>
-        val method = bindingClass.getMethod("inflate", LayoutInflater::class.java)
-        return method.invoke(null, LayoutInflater.from(context)) as T
+        val inflate = try {
+            bindingClass.getMethod("inflate", LayoutInflater::class.java)
+        } catch (e: Exception) {
+            bindingClass.declaredMethods.first {
+                val argumentTypes = arrayOf(LayoutInflater::class.java)
+                it.parameterTypes.contentEquals(argumentTypes)
+            }
+        }
+        return inflate.invoke(null, LayoutInflater.from(context)) as T
     }
 
     class Builder(private val context: Context) {
@@ -127,8 +134,15 @@ open class CustomPopupWindow<T : ViewBinding>(context: Context) : PopupWindow(co
             context: Context,
             bindingClass: Class<out ViewBinding>
         ): ViewBinding {
-            val inflate = bindingClass.getMethod("inflate", LayoutInflater::class.java)
-            return inflate.invoke(inflate, LayoutInflater.from(context)) as ViewBinding
+            val inflate = try {
+                bindingClass.getMethod("inflate", LayoutInflater::class.java)
+            } catch (e: Exception) {
+                bindingClass.declaredMethods.first {
+                    val argumentTypes = arrayOf(LayoutInflater::class.java)
+                    it.parameterTypes.contentEquals(argumentTypes)
+                }
+            }
+            return inflate.invoke(null, LayoutInflater.from(context)) as ViewBinding
         }
     }
 
