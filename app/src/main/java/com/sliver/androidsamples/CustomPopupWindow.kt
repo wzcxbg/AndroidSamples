@@ -11,6 +11,12 @@ import android.widget.PopupWindow
 import androidx.viewbinding.ViewBinding
 import java.lang.reflect.ParameterizedType
 
+/**
+ * CustomPopupWindow：
+ * 1. 如果要求其只专注于一件事，那么这就事是如何构建PopupWindow
+ * 2. 如果要求其只专注于两件事，那么这两件事就是如何构建PopupView和PopupWindow
+ * 3. 如果要求其只专注于三件事，那么这三件事是如何构建PopupView、PopupWindow和如何与外部进行交互
+ */
 open class CustomPopupWindow<T : ViewBinding>(context: Context) : PopupWindow(context) {
     private val builder = Builder(context)
     protected val binding = createBinding(context)
@@ -120,13 +126,13 @@ open class CustomPopupWindow<T : ViewBinding>(context: Context) : PopupWindow(co
             popupWindow.elevation = elevation
 
             listener?.invoke(view ?: return popupWindow, popupWindow)
+            bindingBuilder?.applyParameter(popupWindow)
             return popupWindow
         }
 
         fun build(): PopupWindow {
             val popupWindow = PopupWindow(context)
             applyParameter(popupWindow)
-            bindingBuilder?.applyParameter(popupWindow)
             return popupWindow
         }
 
