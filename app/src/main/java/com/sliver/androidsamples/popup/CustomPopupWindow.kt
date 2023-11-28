@@ -1,4 +1,4 @@
-package com.sliver.androidsamples
+package com.sliver.androidsamples.popup
 
 import android.content.Context
 import android.graphics.Color
@@ -17,43 +17,17 @@ import java.lang.reflect.ParameterizedType
  * 2. 如果要求其只专注于两件事，那么这两件事就是如何构建PopupView和PopupWindow
  * 3. 如果要求其只专注于三件事，那么这三件事是如何构建PopupView、PopupWindow和如何与外部进行交互
  */
-open class CustomPopupWindow<T : ViewBinding>(context: Context) : PopupWindow(context) {
-    private val builder = Builder(context)
-    protected val binding = createBinding(context)
-    private var isInitialized = false
+open class CustomPopupWindow<T : ViewBinding>(context: Context) : BasePopupWindow() {
+    protected val binding by lazy { createBinding(context) }
 
-    protected open fun initView(builder: Builder) {
-
+    override fun initPopupWindow() {
+        initView()
+        initPopup()
+        this.contentView = binding.root
     }
 
-    override fun showAtLocation(parent: View?, gravity: Int, x: Int, y: Int) {
-        initPopupWindow()
-        super.showAtLocation(parent, gravity, x, y)
-    }
-
-    override fun showAsDropDown(anchor: View?) {
-        initPopupWindow()
-        super.showAsDropDown(anchor)
-    }
-
-    override fun showAsDropDown(anchor: View?, xoff: Int, yoff: Int) {
-        initPopupWindow()
-        super.showAsDropDown(anchor, xoff, yoff)
-    }
-
-    override fun showAsDropDown(anchor: View?, xoff: Int, yoff: Int, gravity: Int) {
-        initPopupWindow()
-        super.showAsDropDown(anchor, xoff, yoff, gravity)
-    }
-
-    private fun initPopupWindow() {
-        if (!isInitialized) {
-            builder.customView(binding.root)
-            initView(builder)
-            builder.applyParameter(this)
-            isInitialized = true
-        }
-    }
+    protected open fun initView() {}
+    protected open fun initPopup() {}
 
     private fun createBinding(context: Context): T {
         val superClass = this.javaClass.genericSuperclass as ParameterizedType

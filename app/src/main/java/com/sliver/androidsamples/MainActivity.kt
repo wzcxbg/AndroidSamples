@@ -12,6 +12,7 @@ import androidx.appcompat.app.AppCompatActivity
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
 import com.sliver.androidsamples.databinding.PopupTestBinding
+import com.sliver.androidsamples.popup.CustomPopupWindow
 
 class MainActivity : AppCompatActivity() {
     private val anchor by lazy { findViewById<TextView>(R.id.anchor) }
@@ -24,7 +25,7 @@ class MainActivity : AppCompatActivity() {
     private val seekBarXDesc by lazy { findViewById<TextView>(R.id.seekbar_x_desc) }
     private val seekBarYDesc by lazy { findViewById<TextView>(R.id.seekbar_y_desc) }
     private val recyclerView by lazy { findViewById<RecyclerView>(R.id.recycler_view) }
-    private val popupWindow by lazy { createPopupWindow(this) }
+    private val popupWindow by TestPopupWindow(this)
     private val adapter = GravityAdapter()
     private var showType = ShowType.NONE
 
