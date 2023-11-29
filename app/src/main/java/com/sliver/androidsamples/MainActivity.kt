@@ -13,6 +13,7 @@ import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
 import com.sliver.androidsamples.databinding.PopupTestBinding
 import com.sliver.androidsamples.popup.CustomPopupWindow
+import com.sliver.androidsamples.popup.PopupWindowLocator2
 
 class MainActivity : AppCompatActivity() {
     private val anchor by lazy { findViewById<TextView>(R.id.anchor) }
@@ -33,6 +34,13 @@ class MainActivity : AppCompatActivity() {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_main)
 
+        popupWindow.isShowing
+        recyclerView.postDelayed({
+            PopupWindowLocator2(this, popupWindow)
+                .startToStart()
+                .topToBottom()
+                .show(anchor)
+        },2000)
         recyclerView.layoutManager = LinearLayoutManager(this)
         recyclerView.adapter = adapter
 
