@@ -6,7 +6,7 @@ import android.widget.PopupWindow
 open class BasePopupWindow : PopupWindow(), Lazy<PopupWindow> {
     private var isInitialized = false
 
-    override val value: PopupWindow get() = this
+    override val value: PopupWindow get() = this.apply { initializeFirst() }
     override fun isInitialized() = isInitialized
 
     private fun initializeFirst() {

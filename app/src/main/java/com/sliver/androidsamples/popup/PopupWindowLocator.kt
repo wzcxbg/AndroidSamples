@@ -4,6 +4,7 @@ import android.content.Context
 import android.util.DisplayMetrics
 import android.util.TypedValue
 import android.view.View
+import android.view.View.MeasureSpec
 import android.view.WindowManager
 import android.widget.PopupWindow
 import androidx.constraintlayout.widget.ConstraintLayout
@@ -35,17 +36,10 @@ class PopupWindowLocator(private val popupWindow: PopupWindow) {
         lp.setMargins(lp.leftMargin, lp.topMargin, lp.rightMargin, dpToPx(margin))
     }
 
-    fun show(anchor: View) {
-        popupWindow.showAtLocation(anchor, 0, 0, 0)
-        popupWindow.contentView.post {
-            updateLocation(anchor)
-        }
-    }
-
-    fun updateLocation(anchor: View) {
-        //val widthMeasureSpec = MeasureSpec.makeMeasureSpec(0, MeasureSpec.UNSPECIFIED)
-        //val heightMeasureSpec = MeasureSpec.makeMeasureSpec(0, MeasureSpec.UNSPECIFIED)
-        //popupWindow.contentView.measure(widthMeasureSpec, heightMeasureSpec)
+    fun showAtLocation(anchor: View) {
+        val widthMeasureSpec = MeasureSpec.makeMeasureSpec(0, MeasureSpec.UNSPECIFIED)
+        val heightMeasureSpec = MeasureSpec.makeMeasureSpec(0, MeasureSpec.UNSPECIFIED)
+        popupWindow.contentView.measure(widthMeasureSpec, heightMeasureSpec)
 
         val location = IntArray(2)
         anchor.getLocationInWindow(location)
@@ -105,7 +99,71 @@ class PopupWindowLocator(private val popupWindow: PopupWindow) {
         } else if (lp.bottomToTop == 1 || lp.bottomToBottom == 1) {
             srcY = dstY + (yBottomEdge - lp.bottomMargin)
         }
-        popupWindow.update(anchor, srcX, srcY)
+
+        popupWindow.showAtLocation(anchor, 0, srcX, srcY)
+        popupWindow.contentView.post { updateLocation(anchor) }
+    }
+
+    private fun updateLocation(anchor: View) {
+        val location = IntArray(2)
+        anchor.getLocationInWindow(location)
+        val (dstX, dstY) = location[0] to location[1]
+        val (dstW, dstH) = anchor.measuredWidth to anchor.measuredHeight
+        val (srcW, srcH) = popupWindow.contentView.measuredWidth to popupWindow.contentView.measuredHeight
+        var (srcX, srcY) = 0 to 0
+
+        //计算x坐标
+        var (xLeftEdge, xRightEdge) = 0 to 0
+        if (lp.startToStart == 1 && lp.startToEnd == 1) {
+            xLeftEdge = dstW / 2
+        } else if (lp.startToStart == 1) {
+            xLeftEdge = 0
+        } else if (lp.startToEnd == 1) {
+            xLeftEdge = dstW
+        }
+        if (lp.endToEnd == 1 && lp.endToStart == 1) {
+            xRightEdge = (dstW / 2) - srcW
+        } else if (lp.endToStart == 1) {
+            xRightEdge = -srcW
+        } else if (lp.endToEnd == 1) {
+            xRightEdge = dstW - srcW
+        }
+        if ((lp.startToStart == 1 || lp.startToEnd == 1)
+            && (lp.endToStart == 1 || lp.endToEnd == 1)
+        ) {
+            srcX = dstX + ((xLeftEdge + lp.leftMargin) + (xRightEdge - lp.rightMargin)) / 2
+        } else if (lp.startToStart == 1 || lp.startToEnd == 1) {
+            srcX = dstX + (xLeftEdge + lp.leftMargin)
+        } else if (lp.endToStart == 1 || lp.endToEnd == 1) {
+            srcX = dstX + (xRightEdge - lp.rightMargin)
+        }
+
+        //计算y坐标
+        var (yTopEdge, yBottomEdge) = 0 to 0
+        if (lp.topToTop == 1 && lp.topToBottom == 1) {
+            yTopEdge = dstH / 2
+        } else if (lp.topToTop == 1) {
+            yTopEdge = 0
+        } else if (lp.topToBottom == 1) {
+            yTopEdge = dstH
+        }
+        if (lp.bottomToTop == 1 && lp.bottomToBottom == 1) {
+            yBottomEdge = dstH / 2 - srcH
+        } else if (lp.bottomToTop == 1) {
+            yBottomEdge = -srcH
+        } else if (lp.bottomToBottom == 1) {
+            yBottomEdge = dstH - srcH
+        }
+        if ((lp.topToTop == 1 || lp.topToBottom == 1) &&
+            (lp.bottomToTop == 1 || lp.bottomToBottom == 1)
+        ) {
+            srcY = dstY + ((yTopEdge + lp.topMargin) + (yBottomEdge - lp.bottomMargin)) / 2
+        } else if (lp.topToTop == 1 || lp.topToBottom == 1) {
+            srcY = dstY + (yTopEdge + lp.topMargin)
+        } else if (lp.bottomToTop == 1 || lp.bottomToBottom == 1) {
+            srcY = dstY + (yBottomEdge - lp.bottomMargin)
+        }
+        popupWindow.update(srcX, srcY, -1, -1)
     }
 
     private fun dpToPx(dp: Float): Int {
