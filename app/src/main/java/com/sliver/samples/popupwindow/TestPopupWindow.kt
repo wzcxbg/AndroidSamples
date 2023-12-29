@@ -1,17 +1,17 @@
-package com.sliver.samples
+package com.sliver.samples.popupwindow
 
 import android.content.Context
 import android.view.WindowManager
 import com.sliver.samples.databinding.PopupTestBinding
-import com.sliver.samples.popup.CustomPopupWindow
+import com.sliver.samples.popupwindow.core.CustomPopupWindow
 
 class TestPopupWindow(
-    private val context: Context
+    private val context: Context,
 ) : CustomPopupWindow<PopupTestBinding>(context) {
 
     override fun initView() {
         binding.title.text = "提示"
-        binding.message.text = "确认要退出app吗"
+        binding.message.text = "确认要退出吗"
         binding.cancel.text = "取消"
         binding.confirm.text = "确定"
         binding.cancel.setOnClickListener { dismiss() }
@@ -24,6 +24,7 @@ class TestPopupWindow(
             .height(WindowManager.LayoutParams.WRAP_CONTENT)
             .anime(android.R.style.Animation_InputMethod)
             .outsideTouchable(false)
+            .clippingEnabled(false)
             .applyParameter(this)
     }
 }

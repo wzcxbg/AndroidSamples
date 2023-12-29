@@ -1,4 +1,4 @@
-package com.sliver.samples
+package com.sliver.samples.popupwindow.simple
 
 import android.widget.SeekBar
 
