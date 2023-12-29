@@ -1,4 +1,4 @@
-package com.sliver.androidsamples
+package com.sliver.samples
 
 import android.widget.SeekBar
 

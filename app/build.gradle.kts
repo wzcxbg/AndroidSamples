@@ -4,11 +4,11 @@ plugins {
 }
 
 android {
-    namespace = "com.sliver.androidsamples"
+    namespace = "com.sliver.samples"
     compileSdk = 34
 
     defaultConfig {
-        applicationId = "com.sliver.androidsamples"
+        applicationId = "com.sliver.samples"
         minSdk = 24
         targetSdk = 34
         versionCode = 1

@@ -1,4 +1,4 @@
-package com.sliver.androidsamples.popup
+package com.sliver.samples.popup
 
 import android.view.View
 import android.widget.PopupWindow

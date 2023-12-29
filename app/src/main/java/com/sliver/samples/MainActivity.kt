@@ -1,4 +1,4 @@
-package com.sliver.androidsamples
+package com.sliver.samples
 
 import android.content.Context
 import android.graphics.Color
@@ -11,9 +11,9 @@ import android.widget.TextView
 import androidx.appcompat.app.AppCompatActivity
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
-import com.sliver.androidsamples.databinding.PopupTestBinding
-import com.sliver.androidsamples.popup.CustomPopupWindow
-import com.sliver.androidsamples.popup.PopupWindowLocator
+import com.sliver.samples.databinding.PopupTestBinding
+import com.sliver.samples.popup.CustomPopupWindow
+import com.sliver.samples.popup.PopupWindowLocator
 
 class MainActivity : AppCompatActivity() {
     private val anchor by lazy { findViewById<TextView>(R.id.anchor) }

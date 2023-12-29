@@ -1,4 +1,4 @@
-package com.sliver.androidsamples.popup
+package com.sliver.samples.popup
 
 import android.content.Context
 import android.util.DisplayMetrics

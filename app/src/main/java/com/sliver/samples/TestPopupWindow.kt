@@ -1,9 +1,9 @@
-package com.sliver.androidsamples
+package com.sliver.samples
 
 import android.content.Context
 import android.view.WindowManager
-import com.sliver.androidsamples.databinding.PopupTestBinding
-import com.sliver.androidsamples.popup.CustomPopupWindow
+import com.sliver.samples.databinding.PopupTestBinding
+import com.sliver.samples.popup.CustomPopupWindow
 
 class TestPopupWindow(
     private val context: Context
