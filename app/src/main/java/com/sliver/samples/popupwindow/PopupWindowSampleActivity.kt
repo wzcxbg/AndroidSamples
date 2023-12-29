@@ -14,6 +14,7 @@ import com.sliver.samples.databinding.ActivityPopupWindowSampleBinding
 import com.sliver.samples.databinding.PopupTestBinding
 import com.sliver.samples.popupwindow.adapter.GravityAdapter
 import com.sliver.samples.popupwindow.core.CustomPopupWindow
+import com.sliver.samples.popupwindow.core.PopupWindowLocator
 import com.sliver.samples.popupwindow.simple.SimpleSeekBarChangeListener
 
 class PopupWindowSampleActivity : BaseActivity<ActivityPopupWindowSampleBinding>() {
@@ -24,7 +25,12 @@ class PopupWindowSampleActivity : BaseActivity<ActivityPopupWindowSampleBinding>
     override fun initView() {
         binding.recyclerView.layoutManager = LinearLayoutManager(this)
         binding.recyclerView.adapter = adapter
-
+        binding.anchor.setOnClickListener {
+            PopupWindowLocator(popupWindow)
+                .bottomToTopOfAnchor()
+                .endToEndOfAnchor()
+                .showAtLocation(binding.anchor)
+        }
         adapter.setGravityChangedListener(object : GravityAdapter.GravityListener {
             override fun onGravityChanged(gravity: Int) {
                 popupWindow.dismiss()
