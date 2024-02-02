@@ -3,6 +3,7 @@ package com.sliver.samples.popupwindow
 import android.content.Context
 import android.graphics.Color
 import android.graphics.drawable.ColorDrawable
+import android.view.Gravity
 import android.view.ViewGroup
 import android.view.WindowManager
 import android.widget.PopupWindow
@@ -27,9 +28,9 @@ class PopupWindowSampleActivity : BaseActivity<ActivityPopupWindowSampleBinding>
         binding.recyclerView.adapter = adapter
         binding.anchor.setOnClickListener {
             PopupWindowLocator(popupWindow)
-                .startToEndOfAnchor()
+                .startToStartOfAnchor()
                 .topToBottomOfAnchor()
-                .showAtLocation(binding.anchor)
+                .showAsDropDown(binding.anchor)
         }
         adapter.setGravityChangedListener(object : GravityAdapter.GravityListener {
             override fun onGravityChanged(gravity: Int) {

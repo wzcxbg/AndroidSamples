@@ -11,36 +11,23 @@ import android.view.View
 import android.view.View.MeasureSpec
 import android.view.WindowManager
 import android.widget.PopupWindow
-import androidx.constraintlayout.widget.ConstraintLayout
 import kotlin.math.roundToInt
 
 class PopupWindowLocator(private val popupWindow: PopupWindow) {
-    private val lp = ConstraintLayout.LayoutParams(0, 0)
-    private var gravity = Gravity.START or Gravity.TOP
-    fun startToStartOfAnchor() = apply { lp.startToStart = 1 }
-    fun startToEndOfAnchor() = apply { lp.startToEnd = 1 }
-    fun endToStartOfAnchor() = apply { lp.endToStart = 1 }
-    fun endToEndOfAnchor() = apply { lp.endToEnd = 1 }
-    fun topToTopOfAnchor() = apply { lp.topToTop = 1 }
-    fun topToBottomOfAnchor() = apply { lp.topToBottom = 1 }
-    fun bottomToTopOfAnchor() = apply { lp.bottomToTop = 1 }
-    fun bottomToBottomOfAnchor() = apply { lp.bottomToBottom = 1 }
-    fun gravity(gravity: Int) = apply { this.gravity = gravity }
-    fun marginStart(margin: Float) = apply {
-        lp.setMargins(dpToPx(margin), lp.topMargin, lp.rightMargin, lp.bottomMargin)
-    }
-
-    fun marginEnd(margin: Float) = apply {
-        lp.setMargins(lp.leftMargin, lp.topMargin, dpToPx(margin), lp.bottomMargin)
-    }
-
-    fun marginTop(margin: Float) = apply {
-        lp.setMargins(lp.leftMargin, dpToPx(margin), lp.rightMargin, lp.bottomMargin)
-    }
-
-    fun marginBottom(margin: Float) = apply {
-        lp.setMargins(lp.leftMargin, lp.topMargin, lp.rightMargin, dpToPx(margin))
-    }
+    private val p = Params()
+    fun gravity(gravity: Int) = apply { p.gravity = gravity }
+    fun startToStartOfAnchor() = apply { p.startToStart = 1 }
+    fun startToEndOfAnchor() = apply { p.startToEnd = 1 }
+    fun endToStartOfAnchor() = apply { p.endToStart = 1 }
+    fun endToEndOfAnchor() = apply { p.endToEnd = 1 }
+    fun topToTopOfAnchor() = apply { p.topToTop = 1 }
+    fun topToBottomOfAnchor() = apply { p.topToBottom = 1 }
+    fun bottomToTopOfAnchor() = apply { p.bottomToTop = 1 }
+    fun bottomToBottomOfAnchor() = apply { p.bottomToBottom = 1 }
+    fun marginStart(margin: Float) = apply { p.leftMargin = dpToPx(margin) }
+    fun marginEnd(margin: Float) = apply { p.rightMargin = dpToPx(margin) }
+    fun marginTop(margin: Float) = apply { p.topMargin = dpToPx(margin) }
+    fun marginBottom(margin: Float) = apply { p.bottomMargin = dpToPx(margin) }
 
     fun showAtLocation(anchor: View) {
         val widthMeasureSpec = MeasureSpec.makeMeasureSpec(0, MeasureSpec.UNSPECIFIED)
@@ -55,24 +42,24 @@ class PopupWindowLocator(private val popupWindow: PopupWindow) {
             popupWindow.contentView.measuredWidth,
             popupWindow.contentView.measuredHeight
         )
-        val offsetOfStartTop = calculateOffset(
-            lp, anchorOffset,
+        val offsetOfStartTop = calculateOffsetForShowAtLocation(
+            p, anchorOffset,
             anchorSize, popupSize
         )
 
         val screenSize = getScreenSize(anchor.context)
         val layoutDirection = anchor.layoutDirection
-        val offsetOfGravity = convertOffset(
+        val offsetOfGravity = convertOffsetForShowAtLocation(
             offsetOfStartTop,
             screenSize, popupSize,
-            gravity, layoutDirection
+            p.gravity, layoutDirection
         )
 
-        popupWindow.showAtLocation(anchor, gravity, offsetOfGravity.x, offsetOfGravity.y)
-        popupWindow.contentView.post { updateLocation(anchor) }
+        popupWindow.showAtLocation(anchor, p.gravity, offsetOfGravity.x, offsetOfGravity.y)
+        popupWindow.contentView.post { updateForShowAtLocation(anchor) }
     }
 
-    fun updateLocation(anchor: View) {
+    private fun updateForShowAtLocation(anchor: View) {
         val location = IntArray(2)
         anchor.getLocationInWindow(location)
         val anchorOffset = Point(location[0], location[1])
@@ -81,27 +68,82 @@ class PopupWindowLocator(private val popupWindow: PopupWindow) {
             popupWindow.contentView.measuredWidth,
             popupWindow.contentView.measuredHeight
         )
-        val offsetOfStartTop = calculateOffset(
-            lp, anchorOffset,
+        val offsetOfStartTop = calculateOffsetForShowAtLocation(
+            p, anchorOffset,
             anchorSize, popupSize
         )
 
         val screenSize = getScreenSize(anchor.context)
         val layoutDirection = anchor.layoutDirection
-        val offsetOfGravity = convertOffset(
+        val offsetOfGravity = convertOffsetForShowAtLocation(
             offsetOfStartTop,
             screenSize, popupSize,
-            gravity, layoutDirection
+            p.gravity, layoutDirection
         )
 
         popupWindow.update(offsetOfGravity.x, offsetOfGravity.y, -1, -1)
+        popupWindow.contentView.post { updateForShowAsDropDown(anchor) }
+    }
+
+    /**
+     * 只适配Gravity.Start、Gravity.End、Gravity.Top、Gravity.Bottom
+     */
+    fun showAsDropDown(anchor: View) {
+        val widthMeasureSpec = MeasureSpec.makeMeasureSpec(0, MeasureSpec.UNSPECIFIED)
+        val heightMeasureSpec = MeasureSpec.makeMeasureSpec(0, MeasureSpec.UNSPECIFIED)
+        popupWindow.contentView.measure(widthMeasureSpec, heightMeasureSpec)
+        val anchorSize = Size(anchor.measuredWidth, anchor.measuredHeight)
+        val popupSize = Size(
+            popupWindow.contentView.measuredWidth,
+            popupWindow.contentView.measuredHeight
+        )
+
+        val offsetOfStart = calculateOffsetShowAsDropDown(
+            p, Point(0, 0),
+            anchorSize, popupSize
+        )
+        val offsetOfGravity = convertOffsetShowAsDropDown(
+            offsetOfStart,
+            anchorSize, popupSize,
+            p.gravity, anchor.layoutDirection
+        )
+        popupWindow.showAsDropDown(
+            anchor,
+            offsetOfGravity.x, offsetOfGravity.y,
+            p.gravity
+        )
+    }
+
+    private fun updateForShowAsDropDown(anchor: View) {
+        val anchorSize = Size(
+            anchor.measuredWidth,
+            anchor.measuredHeight
+        )
+        val popupSize = Size(
+            popupWindow.contentView.measuredWidth,
+            popupWindow.contentView.measuredHeight
+        )
+        val offsetOfStart = calculateOffsetShowAsDropDown(
+            p, Point(0, 0),
+            anchorSize, popupSize
+        )
+        val offsetOfGravity = convertOffsetShowAsDropDown(
+            offsetOfStart,
+            anchorSize, popupSize,
+            p.gravity, anchor.layoutDirection
+        )
+        popupWindow.update(
+            anchor,
+            offsetOfGravity.x, offsetOfGravity.y,
+            -1, -1
+        )
     }
 
     /**
      * 计算Popup应该显示的位置x、y (Offset)
      */
-    private fun calculateOffset(
-        lp: ConstraintLayout.LayoutParams,
+    private fun calculateOffsetForShowAtLocation(
+        lp: Params,
         anchorOffset: Point, anchorSize: Size,
         popupSize: Size,
     ): Point {
@@ -164,11 +206,10 @@ class PopupWindowLocator(private val popupWindow: PopupWindow) {
         return Point(srcX, srcY)
     }
 
-
     /**
      * 将基于Start、Top的偏移转为指定Gravity的偏移
      */
-    private fun convertOffset(
+    private fun convertOffsetForShowAtLocation(
         offset: Point,
         screenSize: Size, popupSize: Size,
         gravity: Int, layoutDirection: Int,
@@ -193,6 +234,92 @@ class PopupWindowLocator(private val popupWindow: PopupWindow) {
                 srcY = (screenSize.height - srcH - srcY)
         }
         return Point(srcX, srcY)
+    }
+
+    private fun calculateOffsetShowAsDropDown(
+        lp: Params,
+        anchorOffset: Point, anchorSize: Size,
+        popupSize: Size,
+    ): Point {
+        val (dstW, dstH) = anchorSize.width to anchorSize.height
+        val (srcW, srcH) = popupSize.width to popupSize.height
+        var (srcX, srcY) = 0 to 0
+
+        //计算x坐标
+        var (xLeftEdge, xRightEdge) = 0 to 0
+        if (lp.startToStart == 1 && lp.startToEnd == 1) {
+            xLeftEdge = dstW / 2
+        } else if (lp.startToStart == 1) {
+            xLeftEdge = 0
+        } else if (lp.startToEnd == 1) {
+            xLeftEdge = dstW
+        }
+        if (lp.endToEnd == 1 && lp.endToStart == 1) {
+            xRightEdge = (dstW / 2) - srcW
+        } else if (lp.endToStart == 1) {
+            xRightEdge = -srcW
+        } else if (lp.endToEnd == 1) {
+            xRightEdge = dstW - srcW
+        }
+        if ((lp.startToStart == 1 || lp.startToEnd == 1)
+            && (lp.endToStart == 1 || lp.endToEnd == 1)
+        ) {
+            srcX = 0 + ((xLeftEdge + lp.leftMargin) + (xRightEdge - lp.rightMargin)) / 2
+        } else if (lp.startToStart == 1 || lp.startToEnd == 1) {
+            srcX = 0 + (xLeftEdge + lp.leftMargin)
+        } else if (lp.endToStart == 1 || lp.endToEnd == 1) {
+            srcX = 0 + (xRightEdge - lp.rightMargin)
+        }
+
+        //计算y坐标
+        var (yTopEdge, yBottomEdge) = 0 to 0
+        if (lp.topToTop == 1 && lp.topToBottom == 1) {
+            yTopEdge = -dstH / 2
+        } else if (lp.topToTop == 1) {
+            yTopEdge = -dstH
+        } else if (lp.topToBottom == 1) {
+            yTopEdge = 0
+        }
+        if (lp.bottomToTop == 1 && lp.bottomToBottom == 1) {
+            yBottomEdge = -srcH - dstH / 2
+        } else if (lp.bottomToTop == 1) {
+            yBottomEdge = -srcH - dstH
+        } else if (lp.bottomToBottom == 1) {
+            yBottomEdge = -srcH
+        }
+        if ((lp.topToTop == 1 || lp.topToBottom == 1) &&
+            (lp.bottomToTop == 1 || lp.bottomToBottom == 1)
+        ) {
+            srcY = 0 + ((yTopEdge + lp.topMargin) + (yBottomEdge - lp.bottomMargin)) / 2
+        } else if (lp.topToTop == 1 || lp.topToBottom == 1) {
+            srcY = 0 + (yTopEdge + lp.topMargin)
+        } else if (lp.bottomToTop == 1 || lp.bottomToBottom == 1) {
+            srcY = 0 + (yBottomEdge - lp.bottomMargin)
+        }
+        return Point(srcX, srcY)
+    }
+
+    private fun convertOffsetShowAsDropDown(
+        offset: Point,
+        anchorSize: Size, popupSize: Size,
+        gravity: Int, layoutDirection: Int
+    ): Point {
+        var (offsetX, offsetY) = offset.x to offset.y
+        val (dstW, dstH) = anchorSize.width to anchorSize.height
+        val absGravity = Gravity.getAbsoluteGravity(gravity, layoutDirection)
+        when (absGravity and (Gravity.AXIS_PULL_BEFORE
+                or Gravity.AXIS_PULL_AFTER
+                shl Gravity.AXIS_X_SHIFT)) {
+            0, Gravity.AXIS_PULL_BEFORE shl Gravity.AXIS_X_SHIFT -> {
+                //Gravity.Start do nothing
+            }
+
+            Gravity.AXIS_PULL_AFTER shl Gravity.AXIS_X_SHIFT -> {
+                //Gravity.END
+                offsetX -= dstW
+            }
+        }
+        return Point(offsetX, offsetY)
     }
 
     private fun dpToPx(dp: Float): Int {
@@ -220,4 +347,20 @@ class PopupWindowLocator(private val popupWindow: PopupWindow) {
             Size(size.x, size.y)
         }
     }
+
+    data class Params(
+        var gravity: Int = Gravity.START or Gravity.TOP,
+        var startToStart: Int = 0,
+        var startToEnd: Int = 0,
+        var endToStart: Int = 0,
+        var endToEnd: Int = 0,
+        var topToTop: Int = 0,
+        var topToBottom: Int = 0,
+        var bottomToTop: Int = 0,
+        var bottomToBottom: Int = 0,
+        var leftMargin: Int = 0,
+        var topMargin: Int = 0,
+        var rightMargin: Int = 0,
+        var bottomMargin: Int = 0,
+    )
 }
