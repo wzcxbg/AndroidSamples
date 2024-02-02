@@ -27,8 +27,8 @@ class PopupWindowSampleActivity : BaseActivity<ActivityPopupWindowSampleBinding>
         binding.recyclerView.adapter = adapter
         binding.anchor.setOnClickListener {
             PopupWindowLocator(popupWindow)
-                .bottomToTopOfAnchor()
-                .endToEndOfAnchor()
+                .startToEndOfAnchor()
+                .topToBottomOfAnchor()
                 .showAtLocation(binding.anchor)
         }
         adapter.setGravityChangedListener(object : GravityAdapter.GravityListener {
