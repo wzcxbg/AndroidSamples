@@ -3,7 +3,6 @@ package com.sliver.samples.popupwindow
 import android.content.Context
 import android.graphics.Color
 import android.graphics.drawable.ColorDrawable
-import android.view.Gravity
 import android.view.ViewGroup
 import android.view.WindowManager
 import android.widget.PopupWindow
@@ -145,7 +144,7 @@ class PopupWindowSampleActivity : BaseActivity<ActivityPopupWindowSampleBinding>
                 cancel.text = "取消"
                 confirm.text = "确定"
             }
-            .outsideTouchable(false)
+            .outsideCancelable(false)
             .elevation(16f)
             .build()
     }

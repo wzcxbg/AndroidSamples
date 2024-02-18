@@ -23,7 +23,7 @@ class TestPopupWindow(
             .width(WindowManager.LayoutParams.WRAP_CONTENT)
             .height(WindowManager.LayoutParams.WRAP_CONTENT)
             .anime(android.R.style.Animation_InputMethod)
-            .outsideTouchable(false)
+            .outsideCancelable(true)
             .clippingEnabled(false)
             .applyParameter(this)
     }

@@ -17,6 +17,7 @@ import java.lang.reflect.ParameterizedType
  * 2. 如果要求其只专注于两件事，那么这两件事就是如何构建PopupView和PopupWindow
  * 3. 如果要求其只专注于三件事，那么这三件事是如何构建PopupView、PopupWindow和如何与外部进行交互
  */
+@Suppress("UNCHECKED_CAST")
 open class CustomPopupWindow<T : ViewBinding>(context: Context) : BasePopupWindow() {
     protected val binding by lazy { createBinding(context) }
 
@@ -48,7 +49,7 @@ open class CustomPopupWindow<T : ViewBinding>(context: Context) : BasePopupWindo
         private var width = WindowManager.LayoutParams.WRAP_CONTENT
         private var height = WindowManager.LayoutParams.WRAP_CONTENT
         private var animationStyle = -1
-        private var outsideTouchable = true //点击外部取消显示
+        private var outsideCancelable = true //点击外部取消显示
         private var clippingEnabled = true  //限制在屏幕内显示
         private var enterTransition: Transition? = null
         private var exitTransition: Transition? = null
@@ -81,8 +82,8 @@ open class CustomPopupWindow<T : ViewBinding>(context: Context) : BasePopupWindo
         fun elevation(elevation: Float) = apply { this.elevation = elevation }
         fun enterTransition(transition: Transition) = apply { this.enterTransition = transition }
         fun exitTransition(transition: Transition) = apply { this.exitTransition = transition }
-        fun outsideTouchable(touchable: Boolean) = apply { this.outsideTouchable = touchable }
-        fun clippingEnabled(enabled: Boolean) = apply { this.outsideTouchable = enabled }
+        fun outsideCancelable(cancelable: Boolean) = apply { this.outsideCancelable = cancelable }
+        fun clippingEnabled(enabled: Boolean) = apply { this.clippingEnabled = enabled }
 
         fun applyParameter(popupWindow: PopupWindow): PopupWindow {
             popupWindow.width = width
@@ -90,7 +91,10 @@ open class CustomPopupWindow<T : ViewBinding>(context: Context) : BasePopupWindo
             popupWindow.contentView = view
 
             popupWindow.animationStyle = animationStyle
-            popupWindow.isOutsideTouchable = outsideTouchable
+            if (outsideCancelable) {
+                popupWindow.isFocusable = true
+                popupWindow.isOutsideTouchable = true
+            }
             popupWindow.isClippingEnabled = clippingEnabled
             popupWindow.enterTransition = enterTransition
             popupWindow.exitTransition = exitTransition
