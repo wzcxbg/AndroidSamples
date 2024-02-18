@@ -53,7 +53,7 @@ open class CustomPopupWindow<T : ViewBinding>(context: Context) : BasePopupWindo
         private var clippingEnabled = true  //限制在屏幕内显示
         private var enterTransition: Transition? = null
         private var exitTransition: Transition? = null
-        private var elevation = 16f
+        private var elevation = 0f
         private var listener: (View.(PopupWindow) -> Unit)? = null
         private var bindingBuilder: BindingBuilder<out ViewBinding>? = null
 
@@ -99,9 +99,13 @@ open class CustomPopupWindow<T : ViewBinding>(context: Context) : BasePopupWindo
             popupWindow.enterTransition = enterTransition
             popupWindow.exitTransition = exitTransition
 
-            //需要先设置背景颜色不透明，elevation属性才有效
-            popupWindow.setBackgroundDrawable(ColorDrawable(Color.TRANSPARENT))
-            popupWindow.elevation = elevation
+            if (elevation > 0f) {
+                //需要先设置背景颜色不透明，elevation属性才有效
+                //不建议在PopupWindow上设置elevation，因为其不支持圆角等特殊形状
+                //推荐使用自定义View实现阴影效果来代替
+                popupWindow.setBackgroundDrawable(ColorDrawable(Color.WHITE))
+                popupWindow.elevation = elevation
+            }
 
             listener?.invoke(view ?: return popupWindow, popupWindow)
             bindingBuilder?.applyParameter(popupWindow)
