@@ -10,6 +10,6 @@ class MainActivity : AppCompatActivity() {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_main)
 
-        startActivity(Intent(this, PopupWindowSampleActivity::class.java))
+        //startActivity(Intent(this, PopupWindowSampleActivity::class.java))
     }
 }
