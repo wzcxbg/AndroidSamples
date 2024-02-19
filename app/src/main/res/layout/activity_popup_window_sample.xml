@@ -226,4 +226,13 @@
         app:layout_constraintEnd_toEndOf="@id/seekbar_y"
         app:layout_constraintStart_toEndOf="@id/gravity"
         app:layout_constraintTop_toTopOf="@id/gravity" />
+
+    <com.sliver.samples.custom.CustomBlurView
+        android:id="@+id/blur_view"
+        android:layout_width="200dp"
+        android:layout_height="100dp"
+        android:layout_marginTop="32dp"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toTopOf="parent" />
 </androidx.constraintlayout.widget.ConstraintLayout>
