@@ -6,18 +6,7 @@
     android:layout_height="match_parent"
     tools:context=".MainActivity">
 
-    <!--    <com.sliver.samples.custom.ShadowTextView
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:padding="8dp"
-            android:text="Hello"
-            android:textColor="?colorAccent"
-            app:layout_constraintBottom_toBottomOf="parent"
-            app:layout_constraintEnd_toEndOf="parent"
-            app:layout_constraintStart_toStartOf="parent"
-            app:layout_constraintTop_toTopOf="parent" />-->
-
-    <com.sliver.samples.custom.ShadowLayout
+    <com.sliver.samples.custom.CustomShadowLayout
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         app:layout_constraintBottom_toBottomOf="parent"
@@ -25,15 +14,16 @@
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toTopOf="parent">
 
-        <com.sliver.samples.custom.CustomBubbleTextView
+        <TextView
+            android:id="@+id/hello"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
+            android:background="@color/white"
             android:padding="8dp"
             android:text="Hello"
-            android:textColor="@color/white"
             app:layout_constraintBottom_toBottomOf="parent"
             app:layout_constraintEnd_toEndOf="parent"
             app:layout_constraintStart_toStartOf="parent"
             app:layout_constraintTop_toTopOf="parent" />
-    </com.sliver.samples.custom.ShadowLayout>
+    </com.sliver.samples.custom.CustomShadowLayout>
 </androidx.constraintlayout.widget.ConstraintLayout>

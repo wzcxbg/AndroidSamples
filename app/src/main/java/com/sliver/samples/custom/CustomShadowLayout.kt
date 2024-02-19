@@ -12,7 +12,7 @@ import kotlin.math.abs
 import kotlin.math.max
 import kotlin.math.roundToInt
 
-class ShadowLayout : FrameLayout {
+class CustomShadowLayout : FrameLayout {
     constructor(context: Context) : super(context)
     constructor(context: Context, attrs: AttributeSet?) : super(context, attrs)
     constructor(context: Context, attrs: AttributeSet?, defStyleAttr: Int)
@@ -20,8 +20,8 @@ class ShadowLayout : FrameLayout {
 
     private val shadowColor = 0xFFDDDDDD.toInt()
     private val shadowRadius = 16f
-    //private val shadowOffsetX = 16f
-    //private val shadowOffsetY = 16f
+    private val shadowOffsetX = 0f
+    private val shadowOffsetY = 0f
     private val paint = Paint()
 
     private var bitmapCache: Bitmap? = null
@@ -32,22 +32,23 @@ class ShadowLayout : FrameLayout {
         paint.color = shadowColor
         paint.maskFilter = BlurMaskFilter(shadowRadius, BlurMaskFilter.Blur.NORMAL)
         setLayerType(LAYER_TYPE_SOFTWARE, paint)
+        //阴影实现：setShadowLayer、BlurMaskFilter
     }
 
     override fun onMeasure(widthMeasureSpec: Int, heightMeasureSpec: Int) {
         super.onMeasure(widthMeasureSpec, heightMeasureSpec)
         val (originWidth, originHeight) = measuredWidth to measuredHeight
-        val adjustWidth = //max(0f, abs(shadowOffsetX) - shadowRadius) +
+        val adjustWidth = max(0f, abs(shadowOffsetX) - shadowRadius) +
                 (shadowRadius + originWidth + shadowRadius)
-        val adjustHeight = //max(0f, abs(shadowOffsetY) - shadowRadius) +
+        val adjustHeight = max(0f, abs(shadowOffsetY) - shadowRadius) +
                 (shadowRadius + originHeight + shadowRadius)
         setMeasuredDimension(adjustWidth.roundToInt(), adjustHeight.roundToInt())
         createCanvas(adjustWidth.roundToInt(), adjustHeight.roundToInt())
     }
 
     override fun onLayout(changed: Boolean, left: Int, top: Int, right: Int, bottom: Int) {
-        val l = shadowRadius.roundToInt()
-        val t = shadowRadius.roundToInt()
+        val l = max(0f, shadowRadius - shadowOffsetX).roundToInt()
+        val t = max(0f, shadowRadius - shadowOffsetY).roundToInt()
         for (i in 0 until childCount) {
             val child = getChildAt(i)
             child.layout(
@@ -68,7 +69,7 @@ class ShadowLayout : FrameLayout {
         canvasCache.drawColor(Color.TRANSPARENT)
         super.dispatchDraw(canvasCache)
         val bitmapAlphaChannel = bitmapCache.extractAlpha()
-        canvas.drawBitmap(bitmapAlphaChannel, 0f, 0f, paint)
+        canvas.drawBitmap(bitmapAlphaChannel, shadowOffsetX, shadowOffsetY, paint)
         bitmapAlphaChannel.recycle()
         canvas.drawBitmap(bitmapCache, 0f, 0f, null)
     }
