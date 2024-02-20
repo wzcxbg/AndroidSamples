@@ -6,7 +6,6 @@ import android.content.ContextWrapper
 import android.graphics.Bitmap
 import android.graphics.Canvas
 import android.util.AttributeSet
-import android.util.Log
 import android.view.View
 import android.view.ViewTreeObserver.OnPreDrawListener
 
@@ -18,19 +17,31 @@ class CustomBlurView : View {
 
     private var drawEnable = true
     private var decorView: View? = null
+    private val blurKit = BlurKit()
 
     override fun onAttachedToWindow() {
         super.onAttachedToWindow()
         decorView = getActivityDecorView()
+        blurKit.prepare(context)
+    }
+
+    override fun onDetachedFromWindow() {
+        super.onDetachedFromWindow()
+        decorView = null
+        blurKit.release()
     }
 
     override fun onDraw(canvas: Canvas) {
         if (drawEnable) {
             drawEnable = false
-            val bitmap = catchViewBackground()
-            Log.e("TAG", "onDraw: ${bitmap.width} ${bitmap.height}")
-            canvas.drawBitmap(bitmap, 0f, 0f, null)
-            bitmap.recycle()
+            val input = catchViewBackground()
+            val output = Bitmap.createBitmap(input)
+
+            blurKit.blur(input, output, 8f)
+            canvas.drawBitmap(output, 0f, 0f, null)
+
+            input.recycle()
+            output.recycle()
             drawEnable = true
 
             decorView?.viewTreeObserver?.addOnPreDrawListener(object : OnPreDrawListener {
