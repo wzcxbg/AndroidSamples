@@ -1,4 +1,4 @@
-package com.sliver.samples.dialog
+package com.sliver.samples.dialogwindow
 
 import com.sliver.samples.base.BaseActivity
 import com.sliver.samples.databinding.ActivityDialogSampleBinding

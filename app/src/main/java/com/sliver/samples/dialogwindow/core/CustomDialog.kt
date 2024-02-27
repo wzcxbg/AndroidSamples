@@ -1,4 +1,4 @@
-package com.sliver.samples.dialog.core
+package com.sliver.samples.dialogwindow.core
 
 import android.app.Dialog
 import android.content.Context

@@ -13,7 +13,10 @@
         android:theme="@style/Theme.AndroidSamples"
         tools:targetApi="31">
         <activity
-            android:name=".dialog.DialogSampleActivity"
+            android:name=".floatingwindow.FloatingWindowSampleActivity"
+            android:exported="false" />
+        <activity
+            android:name=".dialogwindow.DialogSampleActivity"
             android:exported="false" />
         <activity
             android:name=".popupwindow.PopupWindowSampleActivity"

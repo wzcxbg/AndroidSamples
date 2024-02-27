@@ -1,11 +1,11 @@
-package com.sliver.samples.dialog
+package com.sliver.samples.dialogwindow
 
 import android.app.Dialog
 import android.content.Context
 import android.view.WindowManager
 import android.widget.TextView
-import com.sliver.samples.dialog.core.CustomDialog
-import com.sliver.samples.dialog.core.ViewBinding
+import com.sliver.samples.dialogwindow.core.CustomDialog
+import com.sliver.samples.dialogwindow.core.ViewBinding
 
 class TestDialog(context: Context) : CustomDialog<ViewBinding>(context) {
 
