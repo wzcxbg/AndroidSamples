@@ -5,18 +5,18 @@ import android.content.Context
 import android.view.WindowManager
 import android.widget.TextView
 import com.sliver.samples.dialogwindow.core.CustomDialog
-import com.sliver.samples.dialogwindow.core.ViewBinding
+import com.sliver.samples.dialogwindow.core.ViewBindingWrapper
 
-class TestDialog(context: Context) : CustomDialog<ViewBinding>(context) {
+class TestDialog(context: Context) : CustomDialog<ViewBindingWrapper>(context) {
 
-    override fun createBinding(context: Context): ViewBinding {
+    override fun createBinding(context: Context): ViewBindingWrapper {
         val textView = TextView(context)
         textView.text = "Hello"
         textView.fitsSystemWindows = true
-        return ViewBinding(textView)
+        return ViewBindingWrapper(textView)
     }
 
-    override fun initView(binding: ViewBinding) {
+    override fun initView(binding: ViewBindingWrapper) {
         binding.root.setOnClickListener {
 
         }
