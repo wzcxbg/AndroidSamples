@@ -118,7 +118,7 @@ open class CustomDialog<T : ViewBinding>(private val context: Context) : Dialog(
             window?.setGravity(gravity)
             window?.setDimAmount(gray)
 
-            //状态栏半透明，另一个效果: 使弹窗能延伸进状态栏
+            //状态栏半透明，另两个效果: 使弹窗能延伸进状态栏，会导致软键盘无法顶起弹窗
             //如果需要实现沉浸式状态栏，需要:
             // 保持根布局延伸进状态栏：fitsSystemWindows = false
             // 子View设置为不需要延伸进状态栏：fitsSystemWindows = true
