@@ -1,9 +1,14 @@
 package com.sliver.samples.custom
 
+import android.graphics.Color
+import android.graphics.drawable.ColorDrawable
+import android.view.Gravity
+import android.view.LayoutInflater
 import android.view.ViewGroup
-import android.widget.HorizontalScrollView
+import android.widget.TextView
 import androidx.recyclerview.widget.DiffUtil
 import androidx.recyclerview.widget.RecyclerView
+import com.sliver.samples.databinding.ItemFriendListBinding
 
 class FriendListAdapter : RecyclerView.Adapter<FriendListAdapter.ViewHolder>() {
     private val list = ArrayList<Friend>()
@@ -23,12 +28,29 @@ class FriendListAdapter : RecyclerView.Adapter<FriendListAdapter.ViewHolder>() {
             RecyclerView.LayoutParams.MATCH_PARENT,
             RecyclerView.LayoutParams.WRAP_CONTENT,
         )
-        return ViewHolder(slideMenuItemView)
+        val contentBinding = ItemFriendListBinding.inflate(
+            LayoutInflater.from(parent.context),
+            slideMenuItemView.getLayoutContent(), true
+        )
+
+        val menuView = TextView(parent.context)
+        menuView.layoutParams = ViewGroup.LayoutParams(
+            ViewGroup.LayoutParams.WRAP_CONTENT,
+            ViewGroup.LayoutParams.MATCH_PARENT,
+        )
+        menuView.text = "Delete"
+        menuView.gravity = Gravity.CENTER
+        menuView.minWidth = 120
+        menuView.background = ColorDrawable(Color.RED)
+        slideMenuItemView.getLayoutMenu().addView(menuView)
+        return ViewHolder(slideMenuItemView, contentBinding, menuView)
     }
 
     override fun onBindViewHolder(holder: ViewHolder, position: Int) {
         val friend = list[position]
-
+        val binding = holder.contentBinding
+        binding.name.text = friend.name
+        binding.info.text = friend.info
     }
 
     override fun getItemCount(): Int {
@@ -37,8 +59,11 @@ class FriendListAdapter : RecyclerView.Adapter<FriendListAdapter.ViewHolder>() {
 
     data class Friend(val name: String, val info: String)
 
-    class ViewHolder(val view: SlideMenuItemView) :
-        RecyclerView.ViewHolder(view)
+    class ViewHolder(
+        val rootView: SlideMenuItemView,
+        val contentBinding: ItemFriendListBinding,
+        val menuView: TextView
+    ) : RecyclerView.ViewHolder(rootView)
 
     class DiffCallback(
         private val oldItems: List<Friend>,

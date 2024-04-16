@@ -2,18 +2,14 @@ package com.sliver.samples.custom
 
 import android.annotation.SuppressLint
 import android.content.Context
-import android.graphics.Color
 import android.graphics.PointF
-import android.graphics.drawable.ColorDrawable
 import android.util.AttributeSet
-import android.view.Gravity
 import android.view.LayoutInflater
 import android.view.MotionEvent
 import android.view.ViewConfiguration
 import android.view.ViewGroup
 import android.widget.FrameLayout
 import android.widget.OverScroller
-import android.widget.TextView
 import kotlin.math.abs
 
 class SlideMenuItemView : FrameLayout {
@@ -31,13 +27,25 @@ class SlideMenuItemView : FrameLayout {
     constructor(context: Context, attrs: AttributeSet?, defStyleAttr: Int)
             : super(context, attrs, defStyleAttr)
 
+    fun getLayoutContent(): FrameLayout {
+        return binding.layoutContent
+    }
+
+    fun getLayoutMenu(): FrameLayout {
+        return binding.layoutMenu
+    }
 
     override fun onLayout(changed: Boolean, left: Int, top: Int, right: Int, bottom: Int) {
         super.onLayout(changed, left, top, right, bottom)
+        val contentView = binding.layoutContent
+        contentView.layout(
+            (contentView.left + scrollDx).toInt(), contentView.top,
+            (contentView.right + scrollDx).toInt(), contentView.bottom
+        )
         val menuView = binding.layoutMenu
         menuView.layout(
-            (menuView.left + menuView.width + scrollDx).toInt(), menuView.top,
-            (menuView.right + menuView.width + scrollDx).toInt(), menuView.bottom
+            (right + scrollDx).toInt(), menuView.top,
+            (right + menuView.width + scrollDx).toInt(), menuView.bottom
         )
     }
 
@@ -129,27 +137,12 @@ class SlideMenuItemView : FrameLayout {
                     LayoutParams.MATCH_PARENT,
                     LayoutParams.WRAP_CONTENT,
                 )
-                layoutContentContainer.background = ColorDrawable(Color.CYAN)
-
-                val textView = TextView(context)
-                textView.text = "Text"
-                textView.gravity = Gravity.START or Gravity.CENTER_VERTICAL
-                textView.height = 200
-                layoutContentContainer.addView(textView)
 
                 val layoutMenuContainer = FrameLayout(context)
                 layoutMenuContainer.layoutParams = LayoutParams(
                     LayoutParams.WRAP_CONTENT,
                     LayoutParams.MATCH_PARENT,
-                ).also {
-                    it.gravity = Gravity.END
-                }
-                layoutMenuContainer.background = ColorDrawable(Color.RED)
-
-                val tvDelete = TextView(context)
-                tvDelete.text = "Delete"
-                tvDelete.gravity = Gravity.CENTER
-                layoutMenuContainer.addView(tvDelete)
+                )
 
                 if (attachToParent) {
                     parent?.addView(layoutContentContainer)
