@@ -1,10 +1,9 @@
 package com.sliver.samples.custom
 
-import android.view.LayoutInflater
 import android.view.ViewGroup
+import android.widget.HorizontalScrollView
 import androidx.recyclerview.widget.DiffUtil
 import androidx.recyclerview.widget.RecyclerView
-import com.sliver.samples.databinding.ItemFriendListBinding
 
 class FriendListAdapter : RecyclerView.Adapter<FriendListAdapter.ViewHolder>() {
     private val list = ArrayList<Friend>()
@@ -19,20 +18,17 @@ class FriendListAdapter : RecyclerView.Adapter<FriendListAdapter.ViewHolder>() {
     }
 
     override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): ViewHolder {
-        val binding = ItemFriendListBinding.inflate(
-            LayoutInflater.from(parent.context),
-            parent, false
+        val slideMenuItemView = SlideMenuItemView(parent.context)
+        slideMenuItemView.layoutParams = RecyclerView.LayoutParams(
+            RecyclerView.LayoutParams.MATCH_PARENT,
+            RecyclerView.LayoutParams.WRAP_CONTENT,
         )
-        return ViewHolder(binding)
+        return ViewHolder(slideMenuItemView)
     }
 
     override fun onBindViewHolder(holder: ViewHolder, position: Int) {
         val friend = list[position]
-        val binding = holder.binding
-        binding.name.text = friend.name
-        binding.info.text = friend.info
-        //设置内容布局的宽为屏幕宽度
-        binding.layoutContent.layoutParams.width = 1080
+
     }
 
     override fun getItemCount(): Int {
@@ -41,8 +37,8 @@ class FriendListAdapter : RecyclerView.Adapter<FriendListAdapter.ViewHolder>() {
 
     data class Friend(val name: String, val info: String)
 
-    class ViewHolder(val binding: ItemFriendListBinding) :
-        RecyclerView.ViewHolder(binding.root)
+    class ViewHolder(val view: SlideMenuItemView) :
+        RecyclerView.ViewHolder(view)
 
     class DiffCallback(
         private val oldItems: List<Friend>,
