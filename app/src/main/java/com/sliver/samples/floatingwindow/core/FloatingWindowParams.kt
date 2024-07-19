@@ -8,15 +8,15 @@ import androidx.annotation.RequiresApi
 import androidx.annotation.RequiresPermission
 
 class FloatingWindowParams {
-    private var x: Int? = null
-    private var y: Int? = null
-    private var width: Int? = null
-    private var height: Int? = null
-    private var gravity: Int? = null
-    private var format: Int? = null
-    private var type: WindowType? = null
-    private var flags: Int? = null
-    private var movable: Boolean? = null
+    var x: Int? = null
+    var y: Int? = null
+    var width: Int? = null
+    var height: Int? = null
+    var gravity: Int? = null
+    var format: Int? = null
+    var type: WindowType? = null
+    var flags: Int? = null
+    var movable: Boolean? = null
 
     init {
         width = WindowManager.LayoutParams.WRAP_CONTENT

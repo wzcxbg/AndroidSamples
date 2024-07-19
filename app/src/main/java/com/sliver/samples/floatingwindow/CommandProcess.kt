@@ -1,6 +1,5 @@
 package com.sliver.samples.floatingwindow
 
-import android.util.Log
 import java.io.ByteArrayOutputStream
 import java.io.File
 import java.util.Arrays
@@ -17,16 +16,14 @@ class CommandProcess(
     private val threadPool = Executors.newFixedThreadPool(2)
     private val process = Runtime.getRuntime().exec("su")
 
-    @OptIn(ExperimentalStdlibApi::class)
     fun submit(command: String): Future<CommandOutputs> {
         return executor.submit(Callable {
             val magicDeliver = byteArrayOf(
-                'A'.toByte(),
-                'B'.toByte(),
-                'C'.toByte(),
-                'D'.toByte(),
-                'E'.toByte(),
-                '\n'.toByte(),
+                'A'.code.toByte(),
+                'B'.code.toByte(),
+                'C'.code.toByte(),
+                'D'.code.toByte(),
+                '\n'.code.toByte(),
             )
             val readInputTask = threadPool.submit(Callable {
                 val totalBuffer = ByteArrayOutputStream()
@@ -37,14 +34,13 @@ class CommandProcess(
                         input.read(buffer) else -1
                     if (len > 0) {
                         totalBuffer.write(buffer, 0, len)
-                    } else if (totalBuffer.toByteArray().size > 5 &&
-                        Arrays.copyOfRange(
-                            totalBuffer.toByteArray(),
-                            totalBuffer.toByteArray().size - magicDeliver.size,
-                            totalBuffer.toByteArray().size
-                        ).also {
-                            Log.e("TAG", "submit: ${it.toHexString(HexFormat.UpperCase)} ${magicDeliver.toHexString(
-                                HexFormat.UpperCase)}")
+                    } else if (totalBuffer.toByteArray().size >= magicDeliver.size &&
+                        totalBuffer.toByteArray().let { totalBytes ->
+                            Arrays.copyOfRange(
+                                totalBytes,
+                                totalBytes.size - magicDeliver.size,
+                                totalBytes.size
+                            )
                         }.contentEquals(magicDeliver)
                     ) {
                         break
