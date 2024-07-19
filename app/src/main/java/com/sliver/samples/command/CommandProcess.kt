@@ -1,4 +1,4 @@
-package com.sliver.samples.floatingwindow
+package com.sliver.samples.command
 
 import java.io.ByteArrayOutputStream
 import java.io.File

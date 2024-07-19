@@ -1,4 +1,4 @@
-package com.sliver.samples.floatingwindow
+package com.sliver.samples.command
 
 class CommandOutputs(
     val outputBytes: ByteArray,

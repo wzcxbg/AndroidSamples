@@ -3,6 +3,7 @@ package com.sliver.samples.floatingwindow
 import android.annotation.SuppressLint
 import android.content.Context
 import android.graphics.BitmapFactory
+import android.graphics.Color
 import android.graphics.Point
 import android.graphics.PointF
 import android.os.Build
@@ -12,21 +13,31 @@ import android.view.MotionEvent
 import android.view.View
 import android.view.View.OnTouchListener
 import android.view.ViewConfiguration
-import android.widget.ImageView
-import com.sliver.samples.custom.CustomShadowLayout
+import android.view.WindowManager
+import com.sliver.samples.command.CommandProcess
 import com.sliver.samples.floatingwindow.core.CustomFloatingWindow
-import com.sliver.samples.floatingwindow.core.FloatingWindowParams
 import kotlin.math.abs
 import kotlin.system.measureTimeMillis
 
-class TestFloatingWindow(context: Context) : CustomFloatingWindow(context) {
+class TestFloatingWindow(context: Context) :
+    CustomFloatingWindow<TestFloatingWindowBinding>(context) {
     private val commandProcess = CommandProcess("su")
 
+    override fun initParams() {
+        windowParams.width = 400
+        windowParams.height = 400
+        windowParams.gravity = Gravity.CENTER
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+            windowParams.type = WindowManager.LayoutParams.TYPE_APPLICATION_OVERLAY
+        } else {
+            windowParams.type = WindowManager.LayoutParams.TYPE_APPLICATION
+        }
+    }
+
     @SuppressLint("ClickableViewAccessibility")
-    override fun initView(): View {
-        val imageView = ImageView(context)
-        //imageView.setImageDrawable(ColorDrawable(Color.CYAN))
-        imageView.setOnClickListener {
+    override fun initView() {
+        binding.imageView.setBackgroundColor(Color.CYAN)
+        binding.imageView.setOnClickListener {
             measureTimeMillis {
                 val outputsFuture = commandProcess.submit("screencap -p")
                 val commandOutputs = outputsFuture.get()
@@ -34,16 +45,17 @@ class TestFloatingWindow(context: Context) : CustomFloatingWindow(context) {
                     commandOutputs.outputBytes, 0,
                     commandOutputs.outputBytes.size
                 )
-                imageView.setImageBitmap(bitmap)
+                binding.imageView.setImageBitmap(bitmap)
             }.also { Log.e("TAG", "initView: $it") }
         }
-        imageView.performClick()
-        imageView.setOnTouchListener(object : OnTouchListener {
+        binding.imageView.performClick()
+        binding.imageView.setOnTouchListener(object : OnTouchListener {
             private var lastPoint = PointF()
             private var lastTime = 0L
             private var isClick = false
             private val touchSlop = ViewConfiguration.get(context).scaledTouchSlop
             private val tapTimeout = ViewConfiguration.getTapTimeout()
+            private val direction = getGravityDirection(windowParams.gravity)
             override fun onTouch(v: View, event: MotionEvent): Boolean {
                 when (event.actionMasked) {
                     MotionEvent.ACTION_DOWN -> {
@@ -59,7 +71,9 @@ class TestFloatingWindow(context: Context) : CustomFloatingWindow(context) {
                             isClick = false
                         }
                         lastPoint.set(event.rawX, event.rawY)
-                        move(-dx.toInt(), -dy.toInt())
+                        windowParams.x -= dx.toInt() * direction.x
+                        windowParams.y -= dy.toInt() * direction.y
+                        updateParams()
                     }
 
                     MotionEvent.ACTION_UP -> {
@@ -71,22 +85,6 @@ class TestFloatingWindow(context: Context) : CustomFloatingWindow(context) {
                 return true
             }
         })
-        val rootView = CustomShadowLayout(context)
-        rootView.addView(imageView)
-        return rootView
-    }
-
-    override fun initParams(): FloatingWindowParams {
-        val windowParams = FloatingWindowParams()
-        windowParams.width(400)
-        windowParams.height(400)
-        windowParams.gravity(Gravity.CENTER)
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
-            windowParams.type(FloatingWindowParams.WindowType.TYPE_APPLICATION_OVERLAY)
-        } else {
-            windowParams.type(FloatingWindowParams.WindowType.TYPE_APPLICATION)
-        }
-        return windowParams
     }
 
     private fun getGravityDirection(gravity: Int): Point {
