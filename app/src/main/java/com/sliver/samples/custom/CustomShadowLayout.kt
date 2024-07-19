@@ -93,5 +93,7 @@ class CustomShadowLayout : FrameLayout {
 
     private fun releaseCanvas() {
         bitmapCache?.recycle()
+        bitmapCache = null
+        canvasCache = null
     }
 }
