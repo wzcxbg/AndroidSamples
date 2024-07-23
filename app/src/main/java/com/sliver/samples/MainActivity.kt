@@ -7,6 +7,7 @@ import com.sliver.samples.base.BaseActivity
 import com.sliver.samples.custom.FriendListAdapter
 import com.sliver.samples.databinding.ActivityMainBinding
 import com.sliver.samples.floatingwindow.FloatingWindowSampleActivity
+import com.sliver.samples.screencapture.TestScreenCaptureActivity
 
 class MainActivity : BaseActivity<ActivityMainBinding>() {
     private val list = listOf(
@@ -33,7 +34,7 @@ class MainActivity : BaseActivity<ActivityMainBinding>() {
         )
 
         binding.hello.setOnClickListener {
-            val intent = Intent(this, FloatingWindowSampleActivity::class.java)
+            val intent = Intent(this, TestScreenCaptureActivity::class.java)
             startActivity(intent)
         }
     }

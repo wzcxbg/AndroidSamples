@@ -1,4 +1,4 @@
-package com.sliver.samples.floatingwindow
+package com.sliver.samples.screencapture
 
 import android.app.Activity
 import android.content.Context
@@ -10,6 +10,8 @@ import android.hardware.display.VirtualDisplay
 import android.media.ImageReader
 import android.media.projection.MediaProjection
 import android.media.projection.MediaProjectionManager
+import android.os.Handler
+import android.os.HandlerThread
 import android.util.DisplayMetrics
 import android.view.WindowManager
 import androidx.activity.ComponentActivity
@@ -31,6 +33,20 @@ class ScreenCapturer(
     private var mediaProjection: MediaProjection? = null
     private var imageReader: ImageReader? = null
     private var virtualDisplay: VirtualDisplay? = null
+    private var bitmapListener: ((Bitmap) -> Unit)? = null
+    private var handlerThread: HandlerThread? = null
+
+    @Synchronized
+    fun setOnBitmapAvailableListener(listener: (Bitmap) -> Unit) {
+        this.bitmapListener = listener
+    }
+
+    @Synchronized
+    fun isCapturing(): Boolean {
+        return mediaProjection != null &&
+                imageReader != null &&
+                virtualDisplay != null
+    }
 
     @Synchronized
     fun start() {
@@ -44,13 +60,24 @@ class ScreenCapturer(
                 PixelFormat.RGBA_8888,
                 2,
             )
+            if (bitmapListener != null) {
+                val thread = HandlerThread("ScreenCapturer")
+                thread.start()
+                imageReader?.setOnImageAvailableListener(object :
+                    ImageReader.OnImageAvailableListener {
+                    override fun onImageAvailable(reader: ImageReader?) {
+                        bitmapListener?.invoke(getNextBitmap() ?: return)
+                    }
+                }, Handler(thread.looper))
+                handlerThread = thread
+            }
             virtualDisplay = mediaProjection?.createVirtualDisplay(
                 "ScreenCapturer",
                 displayMetrics.widthPixels,
                 displayMetrics.heightPixels,
                 displayMetrics.densityDpi,
                 DisplayManager.VIRTUAL_DISPLAY_FLAG_AUTO_MIRROR,
-                imageReader?.surface, null, null
+                imageReader?.surface, null, null,
             )
         }
     }
@@ -67,15 +94,15 @@ class ScreenCapturer(
         val bitmap = Bitmap.createBitmap(
             immReader.width, immReader.height, Bitmap.Config.ARGB_8888
         )
-        if (width == immReader.width && height == immReader.height) {
+        if (width == bitmap.width && height == bitmap.height) {
             bitmap.copyPixelsFromBuffer(plane.buffer)
         } else {
             val bitmapBuffer = ByteBuffer
-                .allocate(immReader.width * immReader.height * pixelStride)
+                .allocate(bitmap.width * bitmap.height * pixelStride)
             val temp = ByteArray(plane.rowStride)
-            for (i in 0 until immReader.height) {
+            for (i in 0 until bitmap.height) {
                 plane.buffer.get(temp)
-                bitmapBuffer.put(temp, 0, immReader.width * pixelStride)
+                bitmapBuffer.put(temp, 0, bitmap.width * pixelStride)
             }
             bitmapBuffer.flip()
             bitmap.copyPixelsFromBuffer(bitmapBuffer)
@@ -92,6 +119,8 @@ class ScreenCapturer(
         imageReader = null
         mediaProjection?.stop()
         mediaProjection = null
+        handlerThread?.quitSafely()
+        handlerThread = null
     }
 
     private fun getDisplayMetrics(): DisplayMetrics {
@@ -113,26 +142,11 @@ class ScreenCapturer(
         fun registerScreenCaptureLauncher(
             caller: ActivityResultCaller
         ): ScreenCaptureLauncher {
-            return when (caller) {
-                is ComponentActivity -> ScreenCaptureLauncher(
-                    caller, createScreenCaptureIntent(caller)
-                )
-
-                is Fragment -> ScreenCaptureLauncher(
-                    caller, createScreenCaptureIntent(caller.requireContext())
-                )
-
-                else -> throw IllegalArgumentException(
-                    "Support ComponentActivity and Fragment Only"
-                )
-            }
+            return ScreenCaptureLauncher(caller)
         }
     }
 
-    class ScreenCaptureLauncher(
-        caller: ActivityResultCaller,
-        private val captureIntent: Intent,
-    ) {
+    class ScreenCaptureLauncher(private val caller: ActivityResultCaller) {
         private var callback: ActivityResultCallback<ActivityResult>? = null
 
         private val launcher = caller.registerForActivityResult(
@@ -143,7 +157,11 @@ class ScreenCapturer(
 
         fun launch(callback: ActivityResultCallback<ActivityResult>) {
             this.callback = callback
-            launcher.launch(captureIntent)
+            if (caller is ComponentActivity) {
+                launcher.launch(createScreenCaptureIntent(caller))
+            } else if (caller is Fragment) {
+                launcher.launch(createScreenCaptureIntent(caller.requireContext()))
+            }
         }
     }
 }

@@ -43,10 +43,4 @@ class TestFloatingWindowBinding(
             return inflate(inflater, null, false)
         }
     }
-
-    interface ViewBindingInitializer<T : ViewBinding> {
-        fun inflate(inflater: LayoutInflater): T
-        fun inflate(inflater: LayoutInflater, parent: ViewGroup?, attachToParent: Boolean): T
-        fun bind(rootView: View): T?
-    }
 }
