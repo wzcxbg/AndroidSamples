@@ -1,12 +1,12 @@
 package com.sliver.samples
 
 import android.content.Intent
+import android.util.Log
 import androidx.recyclerview.widget.DividerItemDecoration
 import androidx.recyclerview.widget.LinearLayoutManager
 import com.sliver.samples.base.BaseActivity
 import com.sliver.samples.custom.FriendListAdapter
 import com.sliver.samples.databinding.ActivityMainBinding
-import com.sliver.samples.floatingwindow.FloatingWindowSampleActivity
 import com.sliver.samples.screencapture.TestScreenCaptureActivity
 
 class MainActivity : BaseActivity<ActivityMainBinding>() {
@@ -36,6 +36,23 @@ class MainActivity : BaseActivity<ActivityMainBinding>() {
         binding.hello.setOnClickListener {
             val intent = Intent(this, TestScreenCaptureActivity::class.java)
             startActivity(intent)
+        }
+        val controller = AppController()
+        controller.initialize(object : AppController.MessageListener {
+            override fun onOutput(outputMsg: String) {
+                Log.e(TAG, "onOutput: $outputMsg")
+            }
+
+            override fun onError(errorMsg: String) {
+                Log.e(TAG, "onError: $errorMsg")
+            }
+        })
+        binding.terminal.setOnClickListener {
+            controller.execute("ifconfig")
+            controller.execute("ffmpeg")
+            Thread.sleep(3000)
+            controller.execute("input tap 540 1000")
+            controller.shutdown()
         }
     }
 }
