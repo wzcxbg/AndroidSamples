@@ -25,6 +25,13 @@ class MainActivity : BaseActivity<ActivityMainBinding>() {
     )
     private val adapter = FriendListAdapter()
 
+    companion object{
+        init {
+            System.loadLibrary("samples")
+        }
+    }
+    private external fun screenCapture()
+
     override fun initView() {
         adapter.setItems(list)
         binding.recyclerView.adapter = adapter
@@ -48,11 +55,12 @@ class MainActivity : BaseActivity<ActivityMainBinding>() {
             }
         })
         binding.terminal.setOnClickListener {
-            controller.execute("ifconfig")
-            controller.execute("ffmpeg")
-            Thread.sleep(3000)
-            controller.execute("input tap 540 1000")
-            controller.shutdown()
+            screenCapture()
+//            controller.execute("ifconfig")
+//            controller.execute("ffmpeg")
+//            Thread.sleep(3000)
+//            controller.execute("input tap 540 1000")
+//            controller.shutdown()
         }
     }
 }
