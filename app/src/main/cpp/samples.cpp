@@ -55,91 +55,13 @@ Java_com_sliver_samples_MainActivity_screenCapture(JNIEnv *env, jobject thiz) {
     }
 
     write(infp, "echo Hello\n", sizeof("echo Hello\n"));
+    read(outfp, buf, sizeof(buf));
+    __android_log_print(ANDROID_LOG_ERROR, "COMMAND", "Received: %s", buf);
     write(infp, "echo world\n", sizeof("echo world\n"));
+    read(outfp, buf, sizeof(buf));
+    __android_log_print(ANDROID_LOG_ERROR, "COMMAND", "Received: %s", buf);
     write(infp, "input tap 540 1000\n", sizeof( "input tap 540 1000\n"));
-
-    read(outfp, buf, sizeof(buf));
-    __android_log_print(ANDROID_LOG_ERROR, "COMMAND", "Received: %s", buf);
-
-    read(outfp, buf, sizeof(buf));
-    __android_log_print(ANDROID_LOG_ERROR, "COMMAND", "Received: %s", buf);
 
     close(infp);
     close(outfp);
-
-//    const char *cmd = "echo 123\n";
-//    write(fds[0], cmd, sizeof(cmd));
-//    char buffer[1024]{};
-//    size_t len = read(fds[1], buffer, 1024);
-//    __android_log_print(ANDROID_LOG_ERROR, "COMMAND", "len %d", len);
-
-//    int fds[2];
-//    pipe(fds);
-//
-//    dup2(fds[1], STDOUT_FILENO);
-//
-//    FILE *fp = popen("su -c sh", "w");
-//    char *cmd2 = "screencap -p > /data/local/tmp/ss.png\\n";
-//    fwrite(cmd2, strlen(cmd2), 1, fp);
-//    //截图+解码png+input
-
-//    char buf[1024]{};
-//    int len = read(fds[0], buf, 1024);
-//
-//    __android_log_print(ANDROID_LOG_ERROR, "COMMAND", "len %d", len);
-
-
-//    system("screencap -p");
-//    const int R = 0;
-//    const int W = 1;
-//    int fds[2], fdr[2];
-//    if (pipe(fds) || pipe(fdr)) {
-//        return;
-//    }
-//    pid_t pid = fork();
-//    if (pid == -1) {
-//        return;
-//    }
-//    if (pid == 0) {
-//        dup2(fdr[W], STDOUT_FILENO);
-//        uint8_t buf[1024]{};
-//        int len = read(fds[R], buf, 1024);
-//        if (len > 0) {
-//            FILE *fp = popen("sh", "rw");
-//            fwrite("su\n", sizeof("su\n"), 1, fp);
-//            fwrite("screencap -p\n", sizeof("screencap -p\n"), 1, fp);
-//            __android_log_print(ANDROID_LOG_ERROR, "COMMAND", "exec %s", buf);
-//        }
-//    }
-//
-//    write(fds[W], "kunn", sizeof("kunn"));
-//
-//    std::ostringstream strstr;
-//    std::array<char, 8196> buffer{};
-//    size_t len = read(fdr[R], buffer.data(), buffer.size());
-//    __android_log_print(ANDROID_LOG_ERROR, "COMMAND", "read lenkkkk %d", len);
-//    if (len > 0) {
-//        std::string readstr(buffer.data(), len);
-//        strstr << readstr;
-//        __android_log_print(ANDROID_LOG_ERROR, "COMMAND", "read len%s", strstr.str().c_str());
-//    }
-
-//    FILE *pFile = popen("su -c screencap -p", "rw");
-//    if (pFile == nullptr) {
-//        return;
-//    }
-//
-//    std::ostringstream strstr;
-//    std::array<char, 8196> buffer{};
-//    while (!feof(pFile)) {
-//        size_t len = fread(buffer.data(), 1, buffer.size(), pFile);
-//        __android_log_print(ANDROID_LOG_ERROR, "COMMAND", "read len %d", len);
-//        if (len > 0) {
-//            std::string readstr(buffer.data(), len);
-//            strstr << readstr;
-//        }
-//    }
-//    pclose(pFile);
-//
-//    __android_log_print(ANDROID_LOG_ERROR, "COMMAND", "%s", strstr.str().c_str());
 }

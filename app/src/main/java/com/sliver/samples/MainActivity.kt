@@ -44,16 +44,16 @@ class MainActivity : BaseActivity<ActivityMainBinding>() {
             val intent = Intent(this, TestScreenCaptureActivity::class.java)
             startActivity(intent)
         }
-        val controller = AppController()
-        controller.initialize(object : AppController.MessageListener {
-            override fun onOutput(outputMsg: String) {
-                Log.e(TAG, "onOutput: $outputMsg")
-            }
-
-            override fun onError(errorMsg: String) {
-                Log.e(TAG, "onError: $errorMsg")
-            }
-        })
+//        val controller = AppController()
+//        controller.initialize(object : AppController.MessageListener {
+//            override fun onOutput(outputMsg: String) {
+//                Log.e(TAG, "onOutput: $outputMsg")
+//            }
+//
+//            override fun onError(errorMsg: String) {
+//                Log.e(TAG, "onError: $errorMsg")
+//            }
+//        })
         binding.terminal.setOnClickListener {
             screenCapture()
 //            controller.execute("ifconfig")
