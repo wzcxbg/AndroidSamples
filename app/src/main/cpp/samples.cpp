@@ -21,8 +21,8 @@ int popen2(const char *command, int *infp, int *outfp) {
         dup2(p_stdin[0], 0);
         close(p_stdout[0]);
         dup2(p_stdout[1], 1);
-        //execl("/bin/sh", "sh", "-c", command, NULL);
-        execl("/sbin/su", "su", "-c", command, NULL);
+        execl("/bin/sh", "sh", "-c", command, NULL);
+//        execl("/sbin/su", "su", "-c", command, NULL);
         perror("execl");
         exit(1);
     }
@@ -49,7 +49,7 @@ Java_com_sliver_samples_MainActivity_screenCapture(JNIEnv *env, jobject thiz) {
     int infp, outfp;
     char buf[128];
 
-    if (popen2("sh", &infp, &outfp) < 0) {
+    if (popen2("su\n", &infp, &outfp) < 0) {
         perror("popen2");
         return ;
     }
