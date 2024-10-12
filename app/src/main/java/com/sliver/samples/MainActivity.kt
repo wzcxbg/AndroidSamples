@@ -8,6 +8,7 @@ import com.sliver.samples.base.BaseActivity
 import com.sliver.samples.custom.FriendListAdapter
 import com.sliver.samples.databinding.ActivityMainBinding
 import com.sliver.samples.screencapture.TestScreenCaptureActivity
+import java.util.concurrent.Executors
 
 class MainActivity : BaseActivity<ActivityMainBinding>() {
     private val list = listOf(
@@ -54,8 +55,11 @@ class MainActivity : BaseActivity<ActivityMainBinding>() {
 //                Log.e(TAG, "onError: $errorMsg")
 //            }
 //        })
+        val executor = Executors.newSingleThreadExecutor()
         binding.terminal.setOnClickListener {
-            screenCapture()
+            executor.execute {
+                screenCapture()
+            }
 //            controller.execute("ifconfig")
 //            controller.execute("ffmpeg")
 //            Thread.sleep(3000)

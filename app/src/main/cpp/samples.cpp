@@ -62,6 +62,9 @@ Java_com_sliver_samples_MainActivity_screenCapture(JNIEnv *env, jobject thiz) {
     __android_log_print(ANDROID_LOG_ERROR, "COMMAND", "Received: %s", buf);
     write(infp, "input tap 540 1000\n", sizeof( "input tap 540 1000\n"));
 
+    sleep(5);
+    write(infp, "input tap 540 1000\n", sizeof( "input tap 540 1000\n"));
+
     close(infp);
     close(outfp);
 }
