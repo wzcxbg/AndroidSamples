@@ -5,8 +5,9 @@
 #include <android/log.h>
 #include <android/bitmap.h>
 #include <fcntl.h>
+#include <sys/wait.h>
 
-int popen2(const char *command, int *infp, int *outfp) {
+pid_t popen2(const char *command, int *infp, int *outfp) {
     int p_stdin[2], p_stdout[2];
     pid_t pid;
 
@@ -44,27 +45,20 @@ int popen2(const char *command, int *infp, int *outfp) {
 extern "C"
 JNIEXPORT void JNICALL
 Java_com_sliver_samples_MainActivity_screenCapture(JNIEnv *env, jobject thiz) {
-    // 0 读 1 写
-
     int infp, outfp;
     char buf[128];
 
-    if (popen2("su\n", &infp, &outfp) < 0) {
-        perror("popen2");
-        return ;
-    }
+    //way1：sh->su->sh
+    //查看子进程：ps -A --sort=STIME
+    pid_t pid = popen2("su\n", &infp, &outfp);
+    __android_log_print(ANDROID_LOG_ERROR, "COMMAND", "pid: %d", pid);
 
-    write(infp, "echo Hello\n", sizeof("echo Hello\n"));
-    read(outfp, buf, sizeof(buf));
-    __android_log_print(ANDROID_LOG_ERROR, "COMMAND", "Received: %s", buf);
-    write(infp, "echo world\n", sizeof("echo world\n"));
-    read(outfp, buf, sizeof(buf));
-    __android_log_print(ANDROID_LOG_ERROR, "COMMAND", "Received: %s", buf);
     write(infp, "input tap 540 1000\n", sizeof( "input tap 540 1000\n"));
-
     sleep(5);
     write(infp, "input tap 540 1000\n", sizeof( "input tap 540 1000\n"));
 
     close(infp);
     close(outfp);
+    pid_t wait_pid = waitpid(pid, nullptr, 0);
+    __android_log_print(ANDROID_LOG_ERROR, "COMMAND", "wait_pid: %d", wait_pid);
 }
