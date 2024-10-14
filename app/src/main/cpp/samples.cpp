@@ -1,10 +1,12 @@
 #include <iostream>
 #include <sstream>
+#include <vector>
 
 #include <sys/wait.h>
 
 #include <jni.h>
 #include <android/log.h>
+#include <android/bitmap.h>
 
 pid_t popen2(const char *command, int *infp, int *outfp) {
     int p_stdin[2], p_stdout[2];
@@ -89,6 +91,44 @@ Java_com_sliver_samples_MainActivity_screenCapture(JNIEnv *env, jobject thiz) {
 
     std::string ret2 = shell.execute("input tap 540 1000");
     __android_log_print(ANDROID_LOG_ERROR, "COMMAND", "ret2: %s %d", ret2.c_str(), ret2.size());
+
+    jmethodID decodeByteArrayMid = env->GetStaticMethodID(
+            env->FindClass("android/graphics/BitmapFactory"),
+            "decodeByteArray", "([BII)Landroid/graphics/Bitmap;");
+    jbyteArray pngData = env->NewByteArray(jsize(ret1.size()));
+
+    env->SetByteArrayRegion(pngData, 0, jsize(ret1.size()),
+                            reinterpret_cast<const jbyte *>(ret1.data()));
+    jobject bitmapObj = env->CallStaticObjectMethod(
+            env->FindClass("android/graphics/BitmapFactory"),
+            decodeByteArrayMid,
+            pngData, 0, env->GetArrayLength(pngData));
+    if (!env->IsSameObject(bitmapObj, nullptr)) {
+        jmethodID getWidthMid = env->GetMethodID(
+                env->FindClass("android/graphics/Bitmap"), "getWidth", "()I");
+        jmethodID getHeightMid = env->GetMethodID(
+                env->FindClass("android/graphics/Bitmap"), "getHeight", "()I");
+        jint width = env->CallIntMethod(bitmapObj, getWidthMid);
+        jint height = env->CallIntMethod(bitmapObj, getHeightMid);
+
+        __android_log_print(ANDROID_LOG_ERROR, "COMMAND", "bitmapObj: %p %d %d",
+                            bitmapObj, width, height);
+
+        jmethodID getPixelsMid = env->GetMethodID(
+                env->FindClass("android/graphics/Bitmap"), "getPixels", "([IIIIIII)V");
+        jintArray bitmapData = env->NewIntArray(width * height);
+        env->CallVoidMethod(bitmapObj, getPixelsMid, bitmapData,
+                            0, width, 0, 0, width, height);
+
+        std::vector<uint8_t> bitmapNativeData(width * height * sizeof(jint));
+        env->GetIntArrayRegion(bitmapData, 0, width * height,
+                               reinterpret_cast<jint *>(bitmapNativeData.data()));
+        //处理图片数据
+
+        jmethodID recycleMid = env->GetMethodID(
+                env->FindClass("android/graphics/Bitmap"), "recycle", "()V");
+        env->CallVoidMethod(bitmapObj, recycleMid);
+    }
 
 //    int infp, outfp;
 //    char buf[128];
