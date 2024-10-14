@@ -1,11 +1,10 @@
 #include <iostream>
 #include <sstream>
 
+#include <sys/wait.h>
+
 #include <jni.h>
 #include <android/log.h>
-#include <android/bitmap.h>
-#include <fcntl.h>
-#include <sys/wait.h>
 
 pid_t popen2(const char *command, int *infp, int *outfp) {
     int p_stdin[2], p_stdout[2];
@@ -35,7 +34,7 @@ pid_t popen2(const char *command, int *infp, int *outfp) {
 
     if (outfp == NULL)
         close(p_stdout[0]);
-    else{
+    else {
         *outfp = p_stdout[0];
 //        int flags = fcntl(*outfp, F_GETFL, 0);
 //        fcntl(*outfp, F_SETFL, flags | O_NONBLOCK);
@@ -55,27 +54,22 @@ public:
 
     std::string execute(std::string &&cmd) const {
         std::string divider = "\xff\xfe\xfd\xfc\xfb\xfa\xf9\xf8\n";
-        std::string divider_cmd = " && echo " + divider;
-        write(inFd, cmd.c_str(), cmd.length());
-        write(inFd, divider_cmd.c_str(), divider_cmd.size());
-        std::array<char, 128> buf{};
+        std::string input = cmd + " && echo " + divider;
+        write(inFd, input.c_str(), input.size());
+        static std::array<char, 1024> buf{};
         std::ostringstream oss;
         while (true) {
             int len = read(outFd, buf.data(), buf.size());
-            if (len > 0) {
-                std::string line(buf.data(), len);
-                oss << line;
-                auto ouput = oss.str();
-                if (ouput.size() < divider.size()) {
-                    continue;
-                }
-                auto end = ouput.substr(ouput.length() - divider.size(), divider.size());
-                if (end == divider) {
-                    break;
-                }
+            if (len <= 0) continue;
+            std::string tmp(buf.data(), len);
+            oss << tmp;
+            std::string output = oss.str();
+            int idx = std::max(int(output.length() - divider.size()), 0);
+            if (oss.str().substr(idx) == divider) {
+                break;
             }
         }
-        return oss.str();
+        return oss.str().substr(0, oss.str().size() - divider.size());
     }
 
     ~Shell() {
@@ -90,10 +84,10 @@ extern "C"
 JNIEXPORT void JNICALL
 Java_com_sliver_samples_MainActivity_screenCapture(JNIEnv *env, jobject thiz) {
     Shell shell;
-    std::string ret1 = shell.execute("ifconfig");
-    __android_log_print(ANDROID_LOG_ERROR, "COMMAND", "ret1: %s", ret1.c_str());
+    std::string ret1 = shell.execute("screencap -p");
+    __android_log_print(ANDROID_LOG_ERROR, "COMMAND", "ret1: %s %d", ret1.c_str(), ret1.size());
 
-    std::string ret2 = shell.execute("screencap -p");
+    std::string ret2 = shell.execute("input tap 540 1000");
     __android_log_print(ANDROID_LOG_ERROR, "COMMAND", "ret2: %s %d", ret2.c_str(), ret2.size());
 
 //    int infp, outfp;
