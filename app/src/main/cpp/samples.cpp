@@ -1,6 +1,8 @@
 #include <iostream>
 #include <sstream>
 #include <vector>
+#include <thread>
+#include <memory>
 
 #include <sys/wait.h>
 
@@ -82,28 +84,47 @@ public:
 };
 
 
-extern "C"
-JNIEXPORT void JNICALL
-Java_com_sliver_samples_MainActivity_screenCapture(JNIEnv *env, jobject thiz) {
-    Shell shell;
-    std::string ret1 = shell.execute("screencap -p");
-    __android_log_print(ANDROID_LOG_ERROR, "COMMAND", "ret1: %s %d", ret1.c_str(), ret1.size());
+std::unique_ptr<JNIEnv, std::function<void(JNIEnv *)>> GetAutoDetachJniEnv(JavaVM *jvm) {
+    jboolean isAttachedNewThread = JNI_FALSE;
+    JNIEnv *env = nullptr;
+    if (jvm->GetEnv(reinterpret_cast<void **>(&env),
+                    JNI_VERSION_1_6) != JNI_OK) {
+        if (jvm->AttachCurrentThread(&env, nullptr) != JNI_OK) {
+            return nullptr;
+        }
+        isAttachedNewThread = JNI_TRUE;
+    }
+    return {env, [=](JNIEnv *) {
+        if (isAttachedNewThread) {
+            jvm->DetachCurrentThread();
+        }
+    }};
+}
 
-    std::string ret2 = shell.execute("input tap 540 1000");
-    __android_log_print(ANDROID_LOG_ERROR, "COMMAND", "ret2: %s %d", ret2.c_str(), ret2.size());
 
-    jmethodID decodeByteArrayMid = env->GetStaticMethodID(
-            env->FindClass("android/graphics/BitmapFactory"),
-            "decodeByteArray", "([BII)Landroid/graphics/Bitmap;");
-    jbyteArray pngData = env->NewByteArray(jsize(ret1.size()));
+class ImageDecoder {
+    JavaVM *jvm;
+public:
+    explicit ImageDecoder(JavaVM *jvm) : jvm(jvm) {}
 
-    env->SetByteArrayRegion(pngData, 0, jsize(ret1.size()),
-                            reinterpret_cast<const jbyte *>(ret1.data()));
-    jobject bitmapObj = env->CallStaticObjectMethod(
-            env->FindClass("android/graphics/BitmapFactory"),
-            decodeByteArrayMid,
-            pngData, 0, env->GetArrayLength(pngData));
-    if (!env->IsSameObject(bitmapObj, nullptr)) {
+    void *decodeBuffer(uint8_t *imageData, long imageDataLen) {
+        auto env = GetAutoDetachJniEnv(jvm);
+
+        //BitmapFactory.decodeByteArray()
+        jbyteArray pngData = env->NewByteArray(imageDataLen);
+        env->SetByteArrayRegion(pngData, 0, imageDataLen,
+                                reinterpret_cast<const jbyte *>(imageData));
+        jmethodID decodeByteArrayMid = env->GetStaticMethodID(
+                env->FindClass("android/graphics/BitmapFactory"),
+                "decodeByteArray", "([BII)Landroid/graphics/Bitmap;");
+        jobject bitmapObj = env->CallStaticObjectMethod(
+                env->FindClass("android/graphics/BitmapFactory"),
+                decodeByteArrayMid, pngData, 0, env->GetArrayLength(pngData));
+        if (env->IsSameObject(bitmapObj, nullptr)) {
+            return nullptr;
+        }
+
+        //Bitmap.getConfig()
         jmethodID getWidthMid = env->GetMethodID(
                 env->FindClass("android/graphics/Bitmap"), "getWidth", "()I");
         jmethodID getHeightMid = env->GetMethodID(
@@ -122,15 +143,15 @@ Java_com_sliver_samples_MainActivity_screenCapture(JNIEnv *env, jobject thiz) {
                 env->FindClass("android/graphics/Bitmap$Config"),
                 configFid);
         if (!env->IsSameObject(config, argb8888)) {
-            return;
+            return nullptr;
         }
-
         __android_log_print(ANDROID_LOG_ERROR, "COMMAND", "bitmapObj: %p %d %d",
                             bitmapObj, width, height);
 
+        //Bitmap.getPixels()
+        jintArray bitmapData = env->NewIntArray(width * height);
         jmethodID getPixelsMid = env->GetMethodID(
                 env->FindClass("android/graphics/Bitmap"), "getPixels", "([IIIIIII)V");
-        jintArray bitmapData = env->NewIntArray(width * height);
         env->CallVoidMethod(bitmapObj, getPixelsMid, bitmapData,
                             0, width, 0, 0, width, height);
 
@@ -139,10 +160,30 @@ Java_com_sliver_samples_MainActivity_screenCapture(JNIEnv *env, jobject thiz) {
                                reinterpret_cast<jint *>(bitmapNativeData.data()));
         //处理图片数据
 
+        //Bitmap.recycle()
         jmethodID recycleMid = env->GetMethodID(
                 env->FindClass("android/graphics/Bitmap"), "recycle", "()V");
         env->CallVoidMethod(bitmapObj, recycleMid);
+        return nullptr;
     }
+};
+
+extern "C"
+JNIEXPORT void JNICALL
+Java_com_sliver_samples_MainActivity_screenCapture(JNIEnv *env, jobject thiz) {
+    JavaVM *jvm;
+    env->GetJavaVM(&jvm);
+    std::thread([=]() {
+        Shell shell;
+        std::string ret1 = shell.execute("screencap -p");
+        __android_log_print(ANDROID_LOG_ERROR, "COMMAND", "ret1: %s %d", ret1.c_str(), ret1.size());
+
+        std::string ret2 = shell.execute("input tap 540 1000");
+        __android_log_print(ANDROID_LOG_ERROR, "COMMAND", "ret2: %s %d", ret2.c_str(), ret2.size());
+
+        ImageDecoder decoder(jvm);
+        decoder.decodeBuffer(reinterpret_cast<uint8_t *>(ret1.data()), ret1.size());
+    }).detach();
 
 //    int infp, outfp;
 //    char buf[128];
