@@ -108,8 +108,22 @@ Java_com_sliver_samples_MainActivity_screenCapture(JNIEnv *env, jobject thiz) {
                 env->FindClass("android/graphics/Bitmap"), "getWidth", "()I");
         jmethodID getHeightMid = env->GetMethodID(
                 env->FindClass("android/graphics/Bitmap"), "getHeight", "()I");
+        jmethodID getConfigMid = env->GetMethodID(
+                env->FindClass("android/graphics/Bitmap"), "getConfig",
+                "()Landroid/graphics/Bitmap$Config;");
         jint width = env->CallIntMethod(bitmapObj, getWidthMid);
         jint height = env->CallIntMethod(bitmapObj, getHeightMid);
+        jobject config = env->CallObjectMethod(bitmapObj, getConfigMid);
+
+        jfieldID configFid = env->GetStaticFieldID(
+                env->FindClass("android/graphics/Bitmap$Config"),
+                "ARGB_8888", "Landroid/graphics/Bitmap$Config;");
+        jobject argb8888 = env->GetStaticObjectField(
+                env->FindClass("android/graphics/Bitmap$Config"),
+                configFid);
+        if (!env->IsSameObject(config, argb8888)) {
+            return;
+        }
 
         __android_log_print(ANDROID_LOG_ERROR, "COMMAND", "bitmapObj: %p %d %d",
                             bitmapObj, width, height);
