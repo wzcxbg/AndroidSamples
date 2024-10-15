@@ -5,6 +5,7 @@
 #include <android/log.h>
 
 #include <opencv2/opencv.hpp>
+#include <onnxruntime_cxx_api.h>
 
 #include "ImageDecoder.h"
 #include "Shell.h"
@@ -27,7 +28,10 @@ Java_com_sliver_samples_MainActivity_screenCapture(JNIEnv *env, jobject thiz) {
         __android_log_print(ANDROID_LOG_ERROR, "COMMAND", "ret3: %d %d", bitmap->width,
                             bitmap->height);
 
-        __android_log_print(ANDROID_LOG_ERROR, "COMMAND", "ret4: %s",
+        __android_log_print(ANDROID_LOG_ERROR, "COMMAND", "ret4: OpenCV %s",
                             cv::getVersionString().c_str());
+
+        __android_log_print(ANDROID_LOG_ERROR, "COMMAND", "ret5: onnxruntime %s",
+                            Ort::GetVersionString().c_str());
     }).detach();
 }
