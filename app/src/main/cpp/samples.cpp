@@ -189,5 +189,11 @@ Java_com_sliver_samples_MainActivity_screenCapture(JNIEnv *env, jobject thiz) {
                 std::chrono::steady_clock::now().time_since_epoch()).count();
 
         __android_log_print(ANDROID_LOG_ERROR, "COMMAND", "Spent time: %lld", endTime - startTime);
+
+        //结果输出
+        cv::Mat gray(960, 960, CV_32FC1, output_data);
+        cv::Mat result;
+        gray.convertTo(result, -1, 255.0);
+        cv::imwrite("/sdcard/Download/model_test_ret.png", result);
     }).detach();
 }
