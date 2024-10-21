@@ -125,10 +125,6 @@ cv::Mat preprocess3(const cv::Mat &source, int tar_w = 960, int tar_h = 960) {
             std::chrono::steady_clock::now().time_since_epoch()).count();
 
     cv::Mat frame = source.clone();
-    //CV_8UC3
-    cv::resize(source, frame, {tar_w, tar_h});
-    //CV_32FC3
-    frame.convertTo(frame, CV_32FC3, 1.0 / 255.0);
 
     std::vector<cv::Mat> channels;
     cv::split(frame, channels);
@@ -136,13 +132,19 @@ cv::Mat preprocess3(const cv::Mat &source, int tar_w = 960, int tar_h = 960) {
     std::vector<float> mean = {0.485, 0.456, 0.406};
     std::vector<float> std = {0.229, 0.224, 0.225};
 
-    std::vector<int> dims = {3, 960, 960};
+    for (int i = 0; i < 3; ++i) {
+        float meanVal = mean[i];
+        float stdVal = std[i];
+        mean[i] = 1.0f / 255.0f / stdVal;
+        std[i] = -meanVal / stdVal;
+    }
+    std::vector<int> dims = {3, tar_h, tar_w};
     cv::Mat result(int(dims.size()), dims.data(), CV_32FC1);
-    int channelBytes = 960 * 960 * 4;
-    for (int i = 0; i < dims[0]; ++i) {
-        cv::Mat resultCh(960, 960, CV_32FC1, result.data + channelBytes * i);
-        channels[i].convertTo(resultCh, CV_32FC1, 1.0, -mean[i]);
-        resultCh.convertTo(resultCh, CV_32FC1, 1.0 / std[i], 0);
+    u_long channelBytes = tar_h * tar_w * result.elemSize();
+    for (int i = 0; i < 3; ++i) {
+        cv::Mat resultCh(tar_h, tar_w, CV_32FC1, result.data + channelBytes * i);
+        channels[i].convertTo(channels[i], CV_32FC1, mean[i], +std[i]);
+        cv::resize(channels[i], resultCh, {tar_w, tar_h});
     }
     auto endTime = std::chrono::duration_cast<std::chrono::milliseconds>(
             std::chrono::steady_clock::now().time_since_epoch()).count();
