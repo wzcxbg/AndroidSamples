@@ -11,6 +11,8 @@
 #include "Shell.h"
 
 cv::Mat preprocess(const cv::Mat& img, int tar_w = 960, int tar_h = 960) {
+    auto startTime = std::chrono::duration_cast<std::chrono::milliseconds>(
+            std::chrono::steady_clock::now().time_since_epoch()).count();
     // 1. Resize
     cv::Mat resized_img;
     cv::resize(img, resized_img, cv::Size(tar_w, tar_h));
@@ -42,10 +44,15 @@ cv::Mat preprocess(const cv::Mat& img, int tar_w = 960, int tar_h = 960) {
     cv::Mat batched_img;
     cv::merge(channels, batched_img);
 
+    auto endTime = std::chrono::duration_cast<std::chrono::milliseconds>(
+            std::chrono::steady_clock::now().time_since_epoch()).count();
+    __android_log_print(ANDROID_LOG_ERROR, "COMMAND", "Et: %lld", endTime - startTime);
     return batched_img;
 }
 
 std::vector<float> preprocess2(const cv::Mat& source, int tar_w = 960, int tar_h = 960) {
+    auto startTime = std::chrono::duration_cast<std::chrono::milliseconds>(
+            std::chrono::steady_clock::now().time_since_epoch()).count();
     cv::Mat frame;
     int batchsize = 1;
     int net_w = tar_w;
@@ -66,6 +73,9 @@ std::vector<float> preprocess2(const cv::Mat& source, int tar_w = 960, int tar_h
             data_index++;
         }
     }
+    auto endTime = std::chrono::duration_cast<std::chrono::milliseconds>(
+            std::chrono::steady_clock::now().time_since_epoch()).count();
+    __android_log_print(ANDROID_LOG_ERROR, "COMMAND", "Et: %lld", endTime - startTime);
     return mat_data;
 }
 
@@ -81,6 +91,65 @@ std::string getMatShape(const cv::Mat& mat) {
     }
     return oss.str();
 }
+
+template<class T>
+void printCompareMemory(T *data1, T *data2, size_t size,
+                   bool printDiff, T printThreshold) {
+    int cmp_ret = std::memcmp(data1, data2, size);
+    std::ostringstream oss;
+    oss.str("");
+    oss << "result: " << cmp_ret;
+    __android_log_print(ANDROID_LOG_ERROR, "compareMemory", "%s", oss.str().c_str());
+
+    if (cmp_ret == 0) return;
+
+    int same_count = 0;
+    for (int i = 0; i < size; ++i) {
+        if (data1[i] == data2[i]) {
+            same_count++;
+            continue;
+        }
+        if (printDiff && std::abs(data1[i] - data2[i]) > printThreshold) {
+            oss.str("");
+            oss << "data: " << data1[i] << " " << data2[i];
+            __android_log_print(ANDROID_LOG_ERROR, "compareMemory", "%s", oss.str().c_str());
+        }
+    }
+    oss.str("");
+    oss << "same: " << same_count << " total: " << size;
+    __android_log_print(ANDROID_LOG_ERROR, "compareMemory", "%s", oss.str().c_str());
+}
+
+cv::Mat preprocess3(const cv::Mat &source, int tar_w = 960, int tar_h = 960) {
+    auto startTime = std::chrono::duration_cast<std::chrono::milliseconds>(
+            std::chrono::steady_clock::now().time_since_epoch()).count();
+
+    cv::Mat frame = source.clone();
+    //CV_8UC3
+    cv::resize(source, frame, {tar_w, tar_h});
+    //CV_32FC3
+    frame.convertTo(frame, CV_32FC3, 1.0 / 255.0);
+
+    std::vector<cv::Mat> channels;
+    cv::split(frame, channels);
+    std::reverse(channels.begin(), channels.end());
+    std::vector<float> mean = {0.485, 0.456, 0.406};
+    std::vector<float> std = {0.229, 0.224, 0.225};
+
+    std::vector<int> dims = {3, 960, 960};
+    cv::Mat result(int(dims.size()), dims.data(), CV_32FC1);
+    int channelBytes = 960 * 960 * 4;
+    for (int i = 0; i < dims[0]; ++i) {
+        cv::Mat resultCh(960, 960, CV_32FC1, result.data + channelBytes * i);
+        channels[i].convertTo(resultCh, CV_32FC1, 1.0, -mean[i]);
+        resultCh.convertTo(resultCh, CV_32FC1, 1.0 / std[i], 0);
+    }
+    auto endTime = std::chrono::duration_cast<std::chrono::milliseconds>(
+            std::chrono::steady_clock::now().time_since_epoch()).count();
+    __android_log_print(ANDROID_LOG_ERROR, "COMMAND", "Et: %lld", endTime - startTime);
+    return result;
+}
+
 
 extern "C"
 JNIEXPORT void JNICALL
@@ -110,14 +179,17 @@ Java_com_sliver_samples_MainActivity_screenCapture(JNIEnv *env, jobject thiz) {
                 std::chrono::steady_clock::now().time_since_epoch()).count();
 
         // Read image
-        cv::Mat img = cv::imread("/sdcard/Download/model_test.png");
-        cv::cvtColor(img, img, cv::COLOR_BGR2BGRA);
+        cv::Mat img = cv::imread("/sdcard/Download/1.jpg");
         __android_log_print(ANDROID_LOG_ERROR, "COMMAND",
                             "image: width:%d, height:%d, channels:%d, shape:%s",
                             img.cols, img.rows, img.channels(), getMatShape(img).c_str());
 
         // Preprocess image
-        std::vector<float> processed_data = preprocess2(img);
+        std::vector<float> processed_data2 = preprocess2(img);
+        cv::Mat processed_data = preprocess3(img);
+        printCompareMemory<float>(processed_data2.data(),
+                                  reinterpret_cast<float *>(processed_data.data),
+                                  processed_data.total(), false, 0.0000007);
 //        __android_log_print(ANDROID_LOG_ERROR, "COMMAND",
 //                            "preprocess: width:%d, height:%d, channels:%d, shape:%s",
 //                            preprocessed_img.cols, preprocessed_img.rows,
@@ -145,12 +217,12 @@ Java_com_sliver_samples_MainActivity_screenCapture(JNIEnv *env, jobject thiz) {
 
         // 创建输入张量
         //std::vector<float> input_data(dynamic_dim_0 * 3 * dynamic_dim_1 * dynamic_dim_2);
-        std::vector<float> input_data(processed_data.begin(), processed_data.end());
+        //std::vector<float> input_data(processed_data.begin(), processed_data.end());
         std::vector<int64_t> input_shape = {dynamic_dim_0, 3, dynamic_dim_1, dynamic_dim_2};
 
         Ort::Value input_tensor = Ort::Value::CreateTensor<float>(
                 memory_info,
-                input_data.data(), input_data.size(),
+                reinterpret_cast<float *>(processed_data.data), processed_data.total(),
                 input_shape.data(), input_shape.size()
         );
 
