@@ -6,6 +6,7 @@ plugins {
 android {
     namespace = "com.sliver.samples"
     compileSdk = 34
+    ndkVersion = "27.0.12077973"
 
     defaultConfig {
         applicationId = "com.sliver.samples"

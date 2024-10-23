@@ -110,6 +110,91 @@ cv::Mat preprocess3(const cv::Mat &image, int tar_w = 960, int tar_h = 960) {
     return result;
 }
 
+void testOnnx() {
+    auto startTime = std::chrono::duration_cast<std::chrono::milliseconds>(
+            std::chrono::steady_clock::now().time_since_epoch()).count();
+
+    // Read image
+    cv::Mat img = cv::imread("/sdcard/Download/1.jpg");
+    __android_log_print(ANDROID_LOG_ERROR, "COMMAND",
+                        "image: width:%d, height:%d, channels:%d, shape:%s",
+                        img.cols, img.rows, img.channels(), getMatShape(img).c_str());
+
+    // Preprocess image
+    cv::Mat processed_data = preprocess3(img);
+
+    // 创建 ONNX Runtime 环境
+    Ort::Env env(ORT_LOGGING_LEVEL_WARNING, "test");
+
+    // 创建 ONNX Runtime 会话
+    Ort::SessionOptions session_options;
+    Ort::Session session(env, "/sdcard/Download/det.onnx", session_options);
+
+    // 获取输入和输出的名称和维度
+    Ort::AllocatorWithDefaultOptions allocator;
+    Ort::MemoryInfo memory_info = Ort::MemoryInfo::CreateCpu(
+            OrtDeviceAllocator, OrtMemTypeDefault);
+
+    std::vector<const char *> input_node_names = {"x"};
+    std::vector<const char *> output_node_names = {"sigmoid_0.tmp_0"};
+
+    // 创建输入张量
+    int64_t dynamic_dim_0 = 1;  // 例如，p2o.DynamicDimension.0 = 2
+    int64_t dynamic_dim_1 = 960;  // 例如，p2o.DynamicDimension.1 = 4
+    int64_t dynamic_dim_2 = 960;  // 例如，p2o.DynamicDimension.2 = 5
+
+    // 创建输入张量
+    //std::vector<float> input_data(dynamic_dim_0 * 3 * dynamic_dim_1 * dynamic_dim_2);
+    std::vector<int64_t> input_shape = {dynamic_dim_0, 3, dynamic_dim_1, dynamic_dim_2};
+
+    Ort::Value input_tensor = Ort::Value::CreateTensor<float>(
+            memory_info,
+            reinterpret_cast<float *>(processed_data.data), processed_data.total(),
+            input_shape.data(), input_shape.size()
+    );
+
+    // 运行模型
+    std::vector<Ort::Value> output_tensors = session.Run(
+            Ort::RunOptions{nullptr},
+            input_node_names.data(), &input_tensor, 1,
+            output_node_names.data(), 1
+    );
+
+    // 获取输出张量
+    float *output_data = output_tensors[0].GetTensorMutableData<float>();
+    std::vector<int64_t> output_shape = output_tensors[0].GetTensorTypeAndShapeInfo().GetShape();
+
+    // 打印输出
+    std::ostringstream oss;
+    oss << "Output shape: [";
+    for (size_t i = 0; i < output_shape.size(); ++i) {
+        oss << output_shape[i];
+        if (i < output_shape.size() - 1) oss << ", ";
+    }
+    oss << "]" << std::endl;
+
+    __android_log_print(ANDROID_LOG_ERROR, "COMMAND", "%s", oss.str().c_str());
+    oss.str("");
+
+    oss << "Output data: [";
+    for (size_t i = 0; i < output_shape[1]; ++i) {
+        oss << output_data[i];
+        if (i < output_shape[1] - 1) oss << ", ";
+    }
+    oss << "]" << std::endl;
+    __android_log_print(ANDROID_LOG_ERROR, "COMMAND", "%s", oss.str().c_str());
+
+    auto endTime = std::chrono::duration_cast<std::chrono::milliseconds>(
+            std::chrono::steady_clock::now().time_since_epoch()).count();
+
+    __android_log_print(ANDROID_LOG_ERROR, "COMMAND", "Spent time: %lld", endTime - startTime);
+
+    //结果输出
+    cv::Mat gray(960, 960, CV_32FC1, output_data);
+    cv::Mat result;
+    gray.convertTo(result, -1, 255.0);
+    cv::imwrite("/sdcard/Download/model_test_ret.png", result);
+}
 
 extern "C"
 JNIEXPORT void JNICALL
@@ -135,92 +220,6 @@ Java_com_sliver_samples_MainActivity_screenCapture(JNIEnv *env, jobject thiz) {
         __android_log_print(ANDROID_LOG_ERROR, "COMMAND", "ret5: onnxruntime %s",
                             Ort::GetVersionString().c_str());
 
-        auto startTime = std::chrono::duration_cast<std::chrono::milliseconds>(
-                std::chrono::steady_clock::now().time_since_epoch()).count();
-
-        // Read image
-        cv::Mat img = cv::imread("/sdcard/Download/1.jpg");
-        __android_log_print(ANDROID_LOG_ERROR, "COMMAND",
-                            "image: width:%d, height:%d, channels:%d, shape:%s",
-                            img.cols, img.rows, img.channels(), getMatShape(img).c_str());
-
-        // Preprocess image
-        std::vector<float> processed_data2 = preprocess2(img);
-        cv::Mat processed_data = preprocess3(img);
-        printCompareMemory<float>(processed_data2.data(),
-                                  reinterpret_cast<float *>(processed_data.data),
-                                  processed_data.total(), false, 0.0000007);
-
-        // 创建 ONNX Runtime 环境
-        Ort::Env env(ORT_LOGGING_LEVEL_WARNING, "test");
-
-        // 创建 ONNX Runtime 会话
-        Ort::SessionOptions session_options;
-        Ort::Session session(env, "/sdcard/Download/det.onnx", session_options);
-
-        // 获取输入和输出的名称和维度
-        Ort::AllocatorWithDefaultOptions allocator;
-        Ort::MemoryInfo memory_info = Ort::MemoryInfo::CreateCpu(
-                OrtDeviceAllocator, OrtMemTypeDefault);
-
-        std::vector<const char *> input_node_names = {"x"};
-        std::vector<const char *> output_node_names = {"sigmoid_0.tmp_0"};
-
-        // 创建输入张量
-        int64_t dynamic_dim_0 = 1;  // 例如，p2o.DynamicDimension.0 = 2
-        int64_t dynamic_dim_1 = 960;  // 例如，p2o.DynamicDimension.1 = 4
-        int64_t dynamic_dim_2 = 960;  // 例如，p2o.DynamicDimension.2 = 5
-
-        // 创建输入张量
-        //std::vector<float> input_data(dynamic_dim_0 * 3 * dynamic_dim_1 * dynamic_dim_2);
-        std::vector<int64_t> input_shape = {dynamic_dim_0, 3, dynamic_dim_1, dynamic_dim_2};
-
-        Ort::Value input_tensor = Ort::Value::CreateTensor<float>(
-                memory_info,
-                reinterpret_cast<float *>(processed_data.data), processed_data.total(),
-                input_shape.data(), input_shape.size()
-        );
-
-        // 运行模型
-        std::vector<Ort::Value> output_tensors = session.Run(
-                Ort::RunOptions{nullptr},
-                input_node_names.data(), &input_tensor, 1,
-                output_node_names.data(), 1
-        );
-
-        // 获取输出张量
-        float *output_data = output_tensors[0].GetTensorMutableData<float>();
-        std::vector<int64_t> output_shape = output_tensors[0].GetTensorTypeAndShapeInfo().GetShape();
-
-        // 打印输出
-        std::ostringstream oss;
-        oss << "Output shape: [";
-        for (size_t i = 0; i < output_shape.size(); ++i) {
-            oss << output_shape[i];
-            if (i < output_shape.size() - 1) oss << ", ";
-        }
-        oss << "]" << std::endl;
-
-        __android_log_print(ANDROID_LOG_ERROR, "COMMAND", "%s", oss.str().c_str());
-        oss.str("");
-
-        oss << "Output data: [";
-        for (size_t i = 0; i < output_shape[1]; ++i) {
-            oss << output_data[i];
-            if (i < output_shape[1] - 1) oss << ", ";
-        }
-        oss << "]" << std::endl;
-        __android_log_print(ANDROID_LOG_ERROR, "COMMAND", "%s", oss.str().c_str());
-
-        auto endTime = std::chrono::duration_cast<std::chrono::milliseconds>(
-                std::chrono::steady_clock::now().time_since_epoch()).count();
-
-        __android_log_print(ANDROID_LOG_ERROR, "COMMAND", "Spent time: %lld", endTime - startTime);
-
-        //结果输出
-        cv::Mat gray(960, 960, CV_32FC1, output_data);
-        cv::Mat result;
-        gray.convertTo(result, -1, 255.0);
-        cv::imwrite("/sdcard/Download/model_test_ret.png", result);
+        testOnnx();
     }).detach();
 }
