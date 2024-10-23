@@ -2,13 +2,13 @@
 #include <thread>
 
 #include <jni.h>
-#include <android/log.h>
 
 #include <opencv2/opencv.hpp>
 #include <onnxruntime_cxx_api.h>
 
 #include "ImageDecoder.h"
 #include "Shell.h"
+#include "Logger.h"
 
 std::string getMatShape(const cv::Mat &mat) {
     std::ostringstream oss;
@@ -23,14 +23,22 @@ std::string getMatShape(const cv::Mat &mat) {
     return oss.str();
 }
 
+std::string formatShape(std::vector<int64_t> shape) {
+    std::ostringstream oss;
+    oss << "[";
+    for (size_t i = 0; i < shape.size(); ++i) {
+        oss << shape[i];
+        if (i < shape.size() - 1) oss << ", ";
+    }
+    oss << "]";
+    return oss.str();
+}
+
 template<class T>
 void printCompareMemory(T *data1, T *data2, size_t size,
                         bool printDiff, T printThreshold) {
     int cmp_ret = std::memcmp(data1, data2, size);
-    std::ostringstream oss;
-    oss.str("");
-    oss << "result: " << cmp_ret;
-    __android_log_print(ANDROID_LOG_ERROR, "compareMemory", "%s", oss.str().c_str());
+    log("result: {}", cmp_ret);
 
     if (cmp_ret == 0) return;
 
@@ -41,14 +49,10 @@ void printCompareMemory(T *data1, T *data2, size_t size,
             continue;
         }
         if (printDiff && std::abs(data1[i] - data2[i]) > printThreshold) {
-            oss.str("");
-            oss << "data: " << data1[i] << " " << data2[i];
-            __android_log_print(ANDROID_LOG_ERROR, "compareMemory", "%s", oss.str().c_str());
+            log("data: {} {}", data1[i], data2[i]);
         }
     }
-    oss.str("");
-    oss << "same: " << same_count << " total: " << size;
-    __android_log_print(ANDROID_LOG_ERROR, "compareMemory", "%s", oss.str().c_str());
+    log("same: {} total: {}", same_count, size);
 }
 
 std::vector<float> preprocess2(const cv::Mat &source, int tar_w = 960, int tar_h = 960) {
@@ -63,20 +67,21 @@ std::vector<float> preprocess2(const cv::Mat &source, int tar_w = 960, int tar_h
     std::vector<float> mat_data(batchsize * net_w * net_h * 3);
     int data_index = 0;
     // 开启图像预处理
-    for(int i = 0; i < net_h; i++)
-    {
-        const uchar* current = frame.ptr<uchar>(i);                    // 指向每行首地址
-        for(int j = 0; j < net_w; j++)
-        {
-            mat_data[data_index] = ((current[3*j + 0] / 255.0) - 0.485) / 0.229;                    // R
-            mat_data[net_w*net_h + data_index] = ((current[3*j + 1] / 255.0) - 0.456) / 0.224;      // G
-            mat_data[2*net_w * net_h + data_index] = ((current[3*j + 2] / 255.0) - 0.406) / 0.225;  // B
+    for (int i = 0; i < net_h; i++) {
+        const uchar *current = frame.ptr<uchar>(i);                    // 指向每行首地址
+        for (int j = 0; j < net_w; j++) {
+            mat_data[data_index] =
+                    ((current[3 * j + 0] / 255.0) - 0.485) / 0.229;     // R
+            mat_data[net_w * net_h + data_index] =
+                    ((current[3 * j + 1] / 255.0) - 0.456) / 0.224;     // G
+            mat_data[2 * net_w * net_h + data_index] =
+                    ((current[3 * j + 2] / 255.0) - 0.406) / 0.225;     // B
             data_index++;
         }
     }
     auto endTime = std::chrono::duration_cast<std::chrono::milliseconds>(
             std::chrono::steady_clock::now().time_since_epoch()).count();
-    __android_log_print(ANDROID_LOG_ERROR, "COMMAND", "Et: %lld", endTime - startTime);
+    log("Elapsed time: {}", endTime - startTime);
     return mat_data;
 }
 
@@ -106,7 +111,7 @@ cv::Mat preprocess3(const cv::Mat &image, int tar_w = 960, int tar_h = 960) {
     }
     auto endTime = std::chrono::duration_cast<std::chrono::milliseconds>(
             std::chrono::steady_clock::now().time_since_epoch()).count();
-    __android_log_print(ANDROID_LOG_ERROR, "COMMAND", "Et: %lld", endTime - startTime);
+    log("Elapsed time: {}", endTime - startTime);
     return result;
 }
 
@@ -116,9 +121,8 @@ void testOnnx() {
 
     // Read image
     cv::Mat img = cv::imread("/sdcard/Download/1.jpg");
-    __android_log_print(ANDROID_LOG_ERROR, "COMMAND",
-                        "image: width:%d, height:%d, channels:%d, shape:%s",
-                        img.cols, img.rows, img.channels(), getMatShape(img).c_str());
+    log("image: width:{}, height:{}, channels:{}, shape:{}",
+        img.cols, img.rows, img.channels(), getMatShape(img));
 
     // Preprocess image
     cv::Mat processed_data = preprocess3(img);
@@ -165,29 +169,12 @@ void testOnnx() {
     std::vector<int64_t> output_shape = output_tensors[0].GetTensorTypeAndShapeInfo().GetShape();
 
     // 打印输出
-    std::ostringstream oss;
-    oss << "Output shape: [";
-    for (size_t i = 0; i < output_shape.size(); ++i) {
-        oss << output_shape[i];
-        if (i < output_shape.size() - 1) oss << ", ";
-    }
-    oss << "]" << std::endl;
-
-    __android_log_print(ANDROID_LOG_ERROR, "COMMAND", "%s", oss.str().c_str());
-    oss.str("");
-
-    oss << "Output data: [";
-    for (size_t i = 0; i < output_shape[1]; ++i) {
-        oss << output_data[i];
-        if (i < output_shape[1] - 1) oss << ", ";
-    }
-    oss << "]" << std::endl;
-    __android_log_print(ANDROID_LOG_ERROR, "COMMAND", "%s", oss.str().c_str());
+    log("Output shape: {}", formatShape(output_shape));
+    log("Output data: {}", output_data[0]);
 
     auto endTime = std::chrono::duration_cast<std::chrono::milliseconds>(
             std::chrono::steady_clock::now().time_since_epoch()).count();
-
-    __android_log_print(ANDROID_LOG_ERROR, "COMMAND", "Spent time: %lld", endTime - startTime);
+    log("Spent time: {}", endTime - startTime);
 
     //结果输出
     cv::Mat gray(960, 960, CV_32FC1, output_data);
@@ -204,21 +191,18 @@ Java_com_sliver_samples_MainActivity_screenCapture(JNIEnv *env, jobject thiz) {
     std::thread([=]() {
         Shell shell;
         std::string ret1 = shell.execute("screencap -p");
-        __android_log_print(ANDROID_LOG_ERROR, "COMMAND", "ret1: %s %zu", ret1.c_str(), ret1.size());
+        log("screencap -p: {} {}", ret1.c_str(), ret1.size());
 
         std::string ret2 = shell.execute("input tap 540 1000");
-        __android_log_print(ANDROID_LOG_ERROR, "COMMAND", "ret2: %s %zu", ret2.c_str(), ret2.size());
+        log("input tap 540 1000: {} {}", ret2.c_str(), ret2.size());
 
         ImageDecoder decoder(jvm);
         auto bitmap = decoder.decodeBuffer(ret1.data(), ret1.size());
-        __android_log_print(ANDROID_LOG_ERROR, "COMMAND", "ret3: %d %d", bitmap->width,
-                            bitmap->height);
+        log("ImageDecode: width:{} height:{}", bitmap->width, bitmap->height);
 
-        __android_log_print(ANDROID_LOG_ERROR, "COMMAND", "ret4: OpenCV %s",
-                            cv::getVersionString().c_str());
+        log("OpenCV Version: {}", cv::getVersionString());
 
-        __android_log_print(ANDROID_LOG_ERROR, "COMMAND", "ret5: onnxruntime %s",
-                            Ort::GetVersionString().c_str());
+        log("onnxruntime Version: {}", Ort::GetVersionString());
 
         testOnnx();
     }).detach();
