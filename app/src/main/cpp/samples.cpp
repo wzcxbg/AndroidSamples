@@ -81,30 +81,27 @@ std::vector<float> preprocess2(const cv::Mat &source, int tar_w = 960, int tar_h
 }
 
 
-cv::Mat preprocess3(const cv::Mat &source, int tar_w = 960, int tar_h = 960) {
+cv::Mat preprocess3(const cv::Mat &image, int tar_w = 960, int tar_h = 960) {
     auto startTime = std::chrono::duration_cast<std::chrono::milliseconds>(
             std::chrono::steady_clock::now().time_since_epoch()).count();
-
-    cv::Mat frame = source.clone();
-
+    //只支持BGR
     std::vector<cv::Mat> channels;
-    cv::split(frame, channels);
+    cv::split(image, channels);
     std::reverse(channels.begin(), channels.end());
     std::vector<float> mean = {0.485, 0.456, 0.406};
     std::vector<float> std = {0.229, 0.224, 0.225};
-
+    std::vector<float> alpha(3);
+    std::vector<float> beta(3);
     for (int i = 0; i < 3; ++i) {
-        float meanVal = mean[i];
-        float stdVal = std[i];
-        mean[i] = 1.0f / 255.0f / stdVal;
-        std[i] = -meanVal / stdVal;
+        alpha[i] = 1.0f / 255.0f / std[i];
+        beta[i] = -mean[i] / std[i];
     }
     std::vector<int> dims = {3, tar_h, tar_w};
     cv::Mat result(int(dims.size()), dims.data(), CV_32FC1);
     u_long channelBytes = tar_h * tar_w * result.elemSize();
     for (int i = 0; i < 3; ++i) {
         cv::Mat resultCh(tar_h, tar_w, CV_32FC1, result.data + channelBytes * i);
-        channels[i].convertTo(channels[i], CV_32FC1, mean[i], +std[i]);
+        channels[i].convertTo(channels[i], CV_32FC1, alpha[i], +beta[i]);
         cv::resize(channels[i], resultCh, {tar_w, tar_h});
     }
     auto endTime = std::chrono::duration_cast<std::chrono::milliseconds>(
