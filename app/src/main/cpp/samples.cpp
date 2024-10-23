@@ -10,47 +10,48 @@
 #include "ImageDecoder.h"
 #include "Shell.h"
 
-cv::Mat preprocess(const cv::Mat& img, int tar_w = 960, int tar_h = 960) {
-    auto startTime = std::chrono::duration_cast<std::chrono::milliseconds>(
-            std::chrono::steady_clock::now().time_since_epoch()).count();
-    // 1. Resize
-    cv::Mat resized_img;
-    cv::resize(img, resized_img, cv::Size(tar_w, tar_h));
-
-    // 2. Normalize
-    resized_img.convertTo(resized_img, CV_32F, 1.0 / 255.0);
-
-    std::vector<float> mean = {0.485, 0.456, 0.406};
-    std::vector<float> std = {0.229, 0.224, 0.225};
-
-    // Normalize each channel
-    for (int c = 0; c < resized_img.channels(); ++c) {
-        cv::Mat channel;
-        cv::extractChannel(resized_img, channel, c);
-        channel = (channel - mean[c]) / std[c];
-        cv::insertChannel(channel, resized_img, c);
+std::string getMatShape(const cv::Mat &mat) {
+    std::ostringstream oss;
+    oss << "Matrix dimensions: " << mat.dims;
+    oss << " Matrix shape: ";
+    for (int i = 0; i < mat.dims; ++i) {
+        oss << mat.size[i];
+        if (i < mat.dims - 1) {
+            oss << " x ";
+        }
     }
-
-    // 3. Transpose to BCHW
-    cv::Mat transposed_img;
-    cv::transpose(resized_img, transposed_img);
-
-    // Add batch dimension
-    std::vector<cv::Mat> channels;
-    for (int c = 0; c < transposed_img.channels(); ++c) {
-        channels.push_back(transposed_img.row(c));
-    }
-
-    cv::Mat batched_img;
-    cv::merge(channels, batched_img);
-
-    auto endTime = std::chrono::duration_cast<std::chrono::milliseconds>(
-            std::chrono::steady_clock::now().time_since_epoch()).count();
-    __android_log_print(ANDROID_LOG_ERROR, "COMMAND", "Et: %lld", endTime - startTime);
-    return batched_img;
+    return oss.str();
 }
 
-std::vector<float> preprocess2(const cv::Mat& source, int tar_w = 960, int tar_h = 960) {
+template<class T>
+void printCompareMemory(T *data1, T *data2, size_t size,
+                        bool printDiff, T printThreshold) {
+    int cmp_ret = std::memcmp(data1, data2, size);
+    std::ostringstream oss;
+    oss.str("");
+    oss << "result: " << cmp_ret;
+    __android_log_print(ANDROID_LOG_ERROR, "compareMemory", "%s", oss.str().c_str());
+
+    if (cmp_ret == 0) return;
+
+    int same_count = 0;
+    for (int i = 0; i < size; ++i) {
+        if (data1[i] == data2[i]) {
+            same_count++;
+            continue;
+        }
+        if (printDiff && std::abs(data1[i] - data2[i]) > printThreshold) {
+            oss.str("");
+            oss << "data: " << data1[i] << " " << data2[i];
+            __android_log_print(ANDROID_LOG_ERROR, "compareMemory", "%s", oss.str().c_str());
+        }
+    }
+    oss.str("");
+    oss << "same: " << same_count << " total: " << size;
+    __android_log_print(ANDROID_LOG_ERROR, "compareMemory", "%s", oss.str().c_str());
+}
+
+std::vector<float> preprocess2(const cv::Mat &source, int tar_w = 960, int tar_h = 960) {
     auto startTime = std::chrono::duration_cast<std::chrono::milliseconds>(
             std::chrono::steady_clock::now().time_since_epoch()).count();
     cv::Mat frame;
@@ -79,46 +80,6 @@ std::vector<float> preprocess2(const cv::Mat& source, int tar_w = 960, int tar_h
     return mat_data;
 }
 
-std::string getMatShape(const cv::Mat& mat) {
-    std::ostringstream oss;
-    oss << "Matrix dimensions: " << mat.dims;
-    oss << " Matrix shape: ";
-    for (int i = 0; i < mat.dims; ++i) {
-        oss << mat.size[i];
-        if (i < mat.dims - 1) {
-            oss << " x ";
-        }
-    }
-    return oss.str();
-}
-
-template<class T>
-void printCompareMemory(T *data1, T *data2, size_t size,
-                   bool printDiff, T printThreshold) {
-    int cmp_ret = std::memcmp(data1, data2, size);
-    std::ostringstream oss;
-    oss.str("");
-    oss << "result: " << cmp_ret;
-    __android_log_print(ANDROID_LOG_ERROR, "compareMemory", "%s", oss.str().c_str());
-
-    if (cmp_ret == 0) return;
-
-    int same_count = 0;
-    for (int i = 0; i < size; ++i) {
-        if (data1[i] == data2[i]) {
-            same_count++;
-            continue;
-        }
-        if (printDiff && std::abs(data1[i] - data2[i]) > printThreshold) {
-            oss.str("");
-            oss << "data: " << data1[i] << " " << data2[i];
-            __android_log_print(ANDROID_LOG_ERROR, "compareMemory", "%s", oss.str().c_str());
-        }
-    }
-    oss.str("");
-    oss << "same: " << same_count << " total: " << size;
-    __android_log_print(ANDROID_LOG_ERROR, "compareMemory", "%s", oss.str().c_str());
-}
 
 cv::Mat preprocess3(const cv::Mat &source, int tar_w = 960, int tar_h = 960) {
     auto startTime = std::chrono::duration_cast<std::chrono::milliseconds>(
@@ -192,10 +153,6 @@ Java_com_sliver_samples_MainActivity_screenCapture(JNIEnv *env, jobject thiz) {
         printCompareMemory<float>(processed_data2.data(),
                                   reinterpret_cast<float *>(processed_data.data),
                                   processed_data.total(), false, 0.0000007);
-//        __android_log_print(ANDROID_LOG_ERROR, "COMMAND",
-//                            "preprocess: width:%d, height:%d, channels:%d, shape:%s",
-//                            preprocessed_img.cols, preprocessed_img.rows,
-//                            preprocessed_img.channels(), getMatShape(preprocessed_img).c_str());
 
         // 创建 ONNX Runtime 环境
         Ort::Env env(ORT_LOGGING_LEVEL_WARNING, "test");
@@ -206,20 +163,19 @@ Java_com_sliver_samples_MainActivity_screenCapture(JNIEnv *env, jobject thiz) {
 
         // 获取输入和输出的名称和维度
         Ort::AllocatorWithDefaultOptions allocator;
-        Ort::MemoryInfo memory_info = Ort::MemoryInfo::CreateCpu(OrtDeviceAllocator, OrtMemTypeDefault);
+        Ort::MemoryInfo memory_info = Ort::MemoryInfo::CreateCpu(
+                OrtDeviceAllocator, OrtMemTypeDefault);
 
-        std::vector<const char*> input_node_names = {"x"};
-        std::vector<const char*> output_node_names = {"sigmoid_0.tmp_0"};
+        std::vector<const char *> input_node_names = {"x"};
+        std::vector<const char *> output_node_names = {"sigmoid_0.tmp_0"};
 
         // 创建输入张量
-        // 动态维度的具体值
         int64_t dynamic_dim_0 = 1;  // 例如，p2o.DynamicDimension.0 = 2
         int64_t dynamic_dim_1 = 960;  // 例如，p2o.DynamicDimension.1 = 4
         int64_t dynamic_dim_2 = 960;  // 例如，p2o.DynamicDimension.2 = 5
 
         // 创建输入张量
         //std::vector<float> input_data(dynamic_dim_0 * 3 * dynamic_dim_1 * dynamic_dim_2);
-        //std::vector<float> input_data(processed_data.begin(), processed_data.end());
         std::vector<int64_t> input_shape = {dynamic_dim_0, 3, dynamic_dim_1, dynamic_dim_2};
 
         Ort::Value input_tensor = Ort::Value::CreateTensor<float>(
@@ -236,7 +192,7 @@ Java_com_sliver_samples_MainActivity_screenCapture(JNIEnv *env, jobject thiz) {
         );
 
         // 获取输出张量
-        float* output_data = output_tensors[0].GetTensorMutableData<float>();
+        float *output_data = output_tensors[0].GetTensorMutableData<float>();
         std::vector<int64_t> output_shape = output_tensors[0].GetTensorTypeAndShapeInfo().GetShape();
 
         // 打印输出
