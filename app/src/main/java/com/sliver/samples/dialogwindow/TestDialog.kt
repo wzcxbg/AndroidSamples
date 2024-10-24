@@ -2,30 +2,33 @@ package com.sliver.samples.dialogwindow
 
 import android.app.Dialog
 import android.content.Context
+import android.view.View
 import android.view.WindowManager
 import android.widget.TextView
-import com.sliver.samples.dialogwindow.core.CustomDialog
-import com.sliver.samples.dialogwindow.core.ViewBindingWrapper
+import androidx.viewbinding.ViewBinding
+import com.sliver.samples.dialogwindow.core.BaseDialog
 
-class TestDialog(context: Context) : CustomDialog<ViewBindingWrapper>(context) {
+class TestDialog(context: Context) : BaseDialog<ViewBinding>(context) {
 
-    override fun createBinding(context: Context): ViewBindingWrapper {
+    override fun createView(): View {
         val textView = TextView(context)
         textView.text = "Hello"
-        textView.fitsSystemWindows = true
-        return ViewBindingWrapper(textView)
+        textView.setBackgroundColor(0xFF550000.toInt())
+        return textView
     }
 
-    override fun initView(binding: ViewBindingWrapper) {
+    override fun initView(binding: ViewBinding) {
         binding.root.setOnClickListener {
 
         }
     }
 
     override fun initDialog(dialog: Dialog) {
-        CustomDialog.Builder(context)
-            .width(WindowManager.LayoutParams.MATCH_PARENT)
-            .height(WindowManager.LayoutParams.MATCH_PARENT)
-            .applyParameter(dialog)
+        super.initDialog(dialog)
+        window?.attributes?.width = WindowManager.LayoutParams.MATCH_PARENT
+        window?.attributes?.height = WindowManager.LayoutParams.MATCH_PARENT
+        window?.addFlags(WindowManager.LayoutParams.FLAG_TRANSLUCENT_STATUS)
+        window?.setWindowAnimations(android.R.style.Animation_InputMethod)
+        binding.root.fitsSystemWindows = true
     }
 }
