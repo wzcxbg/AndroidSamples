@@ -22,7 +22,7 @@ import java.lang.reflect.ParameterizedType
  * 3. 支持View、ViewBinding，可选择自己创建View或通过基类创建ViewBinding
  * 4. 使用最原始的方式设置弹窗的样式，其他人使用时不在需要熟悉新的API
  * 5. 有未创建弹窗但需要先设置弹窗View状态的需求，因此将initView提前到OnCreate之前执行
- * TODO 研究未设置弹窗初始Style时，如何修改状态栏颜色
+ * 6. 全屏时FLAG_TRANSLUCENT_STATUS时，状态栏颜色全黑
  */
 open class CustomDialog<T : ViewBinding>(
     private val context: Context

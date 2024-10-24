@@ -27,7 +27,6 @@ class TestDialog(context: Context) : CustomDialog<ViewBinding>(context) {
         super.initDialog(dialog)
         window?.attributes?.width = WindowManager.LayoutParams.MATCH_PARENT
         window?.attributes?.height = WindowManager.LayoutParams.MATCH_PARENT
-        window?.addFlags(WindowManager.LayoutParams.FLAG_TRANSLUCENT_STATUS)
         window?.setWindowAnimations(android.R.style.Animation_InputMethod)
         binding.root.fitsSystemWindows = true
     }
