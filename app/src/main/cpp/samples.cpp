@@ -124,8 +124,10 @@ void testOnnx() {
     log("image: width:{}, height:{}, channels:{}, shape:{}",
         img.cols, img.rows, img.channels(), getMatShape(img));
 
+    cv::Size targetSize{960, 960};
+
     // Preprocess image
-    cv::Mat processed_data = preprocess3(img);
+    cv::Mat processed_data = preprocess3(img, targetSize.width, targetSize.height);
 
     // 创建 ONNX Runtime 环境
     Ort::Env env(ORT_LOGGING_LEVEL_WARNING, "test");
@@ -144,8 +146,8 @@ void testOnnx() {
 
     // 创建输入张量
     int64_t dynamic_dim_0 = 1;  // 例如，p2o.DynamicDimension.0 = 2
-    int64_t dynamic_dim_1 = 960;  // 例如，p2o.DynamicDimension.1 = 4
-    int64_t dynamic_dim_2 = 960;  // 例如，p2o.DynamicDimension.2 = 5
+    int64_t dynamic_dim_1 = targetSize.height;  // 例如，p2o.DynamicDimension.1 = 4
+    int64_t dynamic_dim_2 = targetSize.width;  // 例如，p2o.DynamicDimension.2 = 5
 
     // 创建输入张量
     //std::vector<float> input_data(dynamic_dim_0 * 3 * dynamic_dim_1 * dynamic_dim_2);
@@ -177,7 +179,7 @@ void testOnnx() {
     log("Spent time: {}", endTime - startTime);
 
     //结果输出
-    cv::Mat gray(960, 960, CV_32FC1, output_data);
+    cv::Mat gray(targetSize.height, targetSize.width, CV_32FC1, output_data);
     cv::Mat result;
     gray.convertTo(result, -1, 255.0);
     cv::imwrite("/sdcard/Download/model_test_ret.png", result);
