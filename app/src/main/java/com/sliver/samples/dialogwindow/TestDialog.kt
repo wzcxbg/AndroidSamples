@@ -6,9 +6,9 @@ import android.view.View
 import android.view.WindowManager
 import android.widget.TextView
 import androidx.viewbinding.ViewBinding
-import com.sliver.samples.dialogwindow.core.BaseDialog
+import com.sliver.samples.dialogwindow.core.CustomDialog
 
-class TestDialog(context: Context) : BaseDialog<ViewBinding>(context) {
+class TestDialog(context: Context) : CustomDialog<ViewBinding>(context) {
 
     override fun createView(): View {
         val textView = TextView(context)
