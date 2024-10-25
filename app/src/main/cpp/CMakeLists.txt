@@ -12,3 +12,6 @@ target_link_libraries(${CMAKE_PROJECT_NAME} ${OpenCV_LIBS})
 set(onnxruntime_DIR ${CMAKE_CURRENT_SOURCE_DIR}/3rdparty/onnxruntime/lib/cmake/onnxruntime)
 find_package(onnxruntime REQUIRED)
 target_link_libraries(${CMAKE_PROJECT_NAME} onnxruntime::onnxruntime)
+
+add_subdirectory(3rdparty/paddleocr_cpp_infer)
+target_link_libraries(${CMAKE_PROJECT_NAME} paddleocr_cpp_infer)
