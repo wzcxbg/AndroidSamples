@@ -41,7 +41,8 @@ function(add_model_target TARGET_NAME)
                 OUTPUT ${OUTPUT_OBJ}
                 COMMAND ${CMAKE_COMMAND} -E copy_if_different ${INPUT_FILE} .
                 COMMAND ${CMAKE_OBJCOPY} -I binary -O elf64-aarch64 -B aarch64 ${INPUT_FILE_NAME} ${OUTPUT_OBJ}
-                MAIN_DEPENDENCY ${INPUT_FILE})
+                MAIN_DEPENDENCY ${INPUT_FILE}
+                WORKING_DIRECTORY ${OUTPUT_FILE_DIR})
         list(APPEND OBJECT_FILE_PATHS ${OUTPUT_OBJ})
     endforeach ()
     message("OBJECT_FILE_PATHS ${OBJECT_FILE_PATHS}")
@@ -64,9 +65,10 @@ function(add_model_target TARGET_NAME)
     FILE(WRITE ${HEADER_FILE_PATH} ${HEADER_FILE_CONTENT})
     message("HEADER_FILE_PATH ${HEADER_FILE_PATH}")
 
-    add_library(${TARGET_NAME} STATIC ${HEADER_FILE_PATH} ${OBJECT_FILE_PATHS})
-    target_include_directories(${TARGET_NAME} PUBLIC ${OUTPUT_FILE_DIR})
+    add_library(${TARGET_NAME} STATIC ${OBJECT_FILE_PATHS})
+    target_include_directories(${TARGET_NAME} INTERFACE ${OUTPUT_FILE_DIR})
     set_target_properties(${TARGET_NAME} PROPERTIES LINKER_LANGUAGE CXX)
+    # set_target_properties(${TARGET_NAME} PROPERTIES IMPORTED_LOCATION ${LIBRARY_FILE_PATH})
 endfunction()
 
 add_model_target(models
