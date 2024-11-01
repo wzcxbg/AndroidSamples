@@ -11,10 +11,7 @@
 #include "Logger.h"
 #include "include/postprocess_op.h"
 #include "include/preprocess_op.h"
-
-extern unsigned char _binary_det_onnx_start[];
-extern unsigned char _binary_det_onnx_end[];
-extern unsigned char _binary_det_onnx_size[];
+#include "models.h"
 
 std::string getMatShape(const cv::Mat &mat) {
     std::ostringstream oss;
@@ -228,11 +225,7 @@ void testOnnx2() {
 
     // 创建 ONNX Runtime 会话
     Ort::SessionOptions session_options;
-    size_t model_size = _binary_det_onnx_end - _binary_det_onnx_start;
-    log("model_size: {} {}", model_size, *_binary_det_onnx_size);
-    __android_log_print(ANDROID_LOG_ERROR, "TAG", "model: %p %p %p", _binary_det_onnx_start,
-                        _binary_det_onnx_end, _binary_det_onnx_size);
-    Ort::Session session(env, _binary_det_onnx_start, model_size, session_options);
+    Ort::Session session(env, det_onnx.data(), det_onnx.size_bytes(), session_options);
 
     // 获取输入和输出的名称和维度
     Ort::AllocatorWithDefaultOptions allocator;
@@ -368,7 +361,7 @@ void testOnnx2() {
 
             // 创建 ONNX Runtime 会话
             Ort::SessionOptions session_options;
-            Ort::Session session(env, "/sdcard/Download/cls.onnx", session_options);
+            Ort::Session session(env, cls_onnx.data(), cls_onnx.size_bytes(), session_options);
 
             // 获取输入和输出的名称和维度
             Ort::AllocatorWithDefaultOptions allocator;
@@ -496,7 +489,7 @@ void testOnnx2() {
 
                 // 创建 ONNX Runtime 会话
                 Ort::SessionOptions session_options;
-                Ort::Session session(env, "/sdcard/Download/rec.onnx", session_options);
+                Ort::Session session(env, rec_onnx.data(), rec_onnx.size_bytes(), session_options);
 
                 // 获取输入和输出的名称和维度
                 Ort::AllocatorWithDefaultOptions allocator;
