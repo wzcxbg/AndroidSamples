@@ -592,6 +592,11 @@ Java_com_sliver_samples_MainActivity_screenCapture(JNIEnv *env, jobject thiz) {
 
         log("onnxruntime Version: {}", Ort::GetVersionString());
 
+        auto startTime = std::chrono::time_point_cast<std::chrono::milliseconds>(
+                std::chrono::system_clock::now()).time_since_epoch().count();
         testOnnx2();
+        auto endTime = std::chrono::time_point_cast<std::chrono::milliseconds>(
+                std::chrono::system_clock::now()).time_since_epoch().count();
+        log("OCR elapsed time: {}", endTime - startTime);
     }).detach();
 }
