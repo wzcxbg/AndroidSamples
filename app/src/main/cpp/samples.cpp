@@ -12,6 +12,7 @@
 #include "include/postprocess_op.h"
 #include "include/preprocess_op.h"
 #include "models.h"
+#include "rar.hpp"
 
 std::string getMatShape(const cv::Mat &mat) {
     std::ostringstream oss;
@@ -591,6 +592,8 @@ Java_com_sliver_samples_MainActivity_screenCapture(JNIEnv *env, jobject thiz) {
         log("OpenCV Version: {}", cv::getVersionString());
 
         log("onnxruntime Version: {}", Ort::GetVersionString());
+
+        log("UnRAR Version: {}.{}.{}", RARVER_MAJOR, RARVER_MINOR, RARVER_BETA);
 
         auto startTime = std::chrono::time_point_cast<std::chrono::milliseconds>(
                 std::chrono::system_clock::now()).time_since_epoch().count();

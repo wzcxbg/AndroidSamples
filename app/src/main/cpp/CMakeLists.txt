@@ -103,3 +103,4 @@ add_model_target(models
 target_link_libraries(${CMAKE_PROJECT_NAME} models)
 
 add_subdirectory(3rdparty/unrar)
+target_link_libraries(${CMAKE_PROJECT_NAME} unrar)
