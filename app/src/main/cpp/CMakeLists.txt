@@ -101,3 +101,5 @@ add_model_target(models
         models/cls/cls.onnx
         models/rec/rec.onnx)
 target_link_libraries(${CMAKE_PROJECT_NAME} models)
+
+add_subdirectory(3rdparty/unrar)
