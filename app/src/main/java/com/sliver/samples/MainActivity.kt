@@ -1,14 +1,28 @@
 package com.sliver.samples
 
+import android.Manifest
 import android.content.Intent
 import android.util.Log
+import androidx.core.app.ActivityCompat
 import androidx.recyclerview.widget.DividerItemDecoration
 import androidx.recyclerview.widget.LinearLayoutManager
 import com.sliver.samples.base.BaseActivity
 import com.sliver.samples.custom.FriendListAdapter
 import com.sliver.samples.databinding.ActivityMainBinding
 import com.sliver.samples.screencapture.TestScreenCaptureActivity
+import net.sf.sevenzipjbinding.ExtractAskMode
+import net.sf.sevenzipjbinding.ExtractOperationResult
+import net.sf.sevenzipjbinding.IArchiveExtractCallback
+import net.sf.sevenzipjbinding.IArchiveOpenCallback
+import net.sf.sevenzipjbinding.ISequentialOutStream
+import net.sf.sevenzipjbinding.PropID
+import net.sf.sevenzipjbinding.SevenZip
+import net.sf.sevenzipjbinding.SevenZipException
+import net.sf.sevenzipjbinding.impl.RandomAccessFileInStream
+import java.io.File
+import java.io.RandomAccessFile
 import java.util.concurrent.Executors
+
 
 class MainActivity : BaseActivity<ActivityMainBinding>() {
     private val list = listOf(
@@ -26,7 +40,7 @@ class MainActivity : BaseActivity<ActivityMainBinding>() {
     )
     private val adapter = FriendListAdapter()
 
-    companion object{
+    companion object {
         init {
             System.loadLibrary("samples")
         }
@@ -56,15 +70,138 @@ class MainActivity : BaseActivity<ActivityMainBinding>() {
 //            }
 //        })
         val executor = Executors.newSingleThreadExecutor()
+        ActivityCompat.requestPermissions(
+            this,
+            arrayOf(Manifest.permission.READ_EXTERNAL_STORAGE), 0
+        )
         binding.terminal.setOnClickListener {
             executor.execute {
                 screenCapture()
             }
+
+//            testExtractSlowFile(File("/sdcard/Download/testrar.rar"))
 //            controller.execute("ifconfig")
 //            controller.execute("ffmpeg")
 //            Thread.sleep(3000)
 //            controller.execute("input tap 540 1000")
 //            controller.shutdown()
         }
+    }
+
+    private fun testListArchiveFile(file: File) {
+        val randomAccessFile = RandomAccessFile(file, "r")
+        val inStream = RandomAccessFileInStream(randomAccessFile)
+        val inArchive = SevenZip.openInArchive(null, inStream,
+            object : IArchiveOpenCallback {
+                override fun setTotal(files: Long?, bytes: Long?) {
+                    Log.e(TAG, "testArchiveFile:setTotal $files $bytes")
+                }
+
+                override fun setCompleted(files: Long?, bytes: Long?) {
+                    Log.e(TAG, "testArchiveFile:setCompleted $files $bytes")
+                }
+            })
+
+        Log.e(TAG, "testArchiveFile:Archive format: ${inArchive.archiveFormat}")
+        Log.e(TAG, "testArchiveFile:Items in archive: ${inArchive.numberOfItems}")
+
+        for (i in 0 until inArchive.numberOfItems) {
+            val path = inArchive.getStringProperty(i, PropID.PATH)
+            val size = inArchive.getStringProperty(i, PropID.SIZE)
+            Log.e(TAG, "testArchiveFile: $path $size")
+        }
+
+        inArchive.close()
+        inStream.close()
+    }
+
+    private fun testExtractArchiveFile(file: File) {
+        val randomAccessFile = RandomAccessFile(file, "r")
+        val inStream = RandomAccessFileInStream(randomAccessFile)
+        val inArchive = SevenZip.openInArchive(null,
+            inStream, object : IArchiveOpenCallback {
+                override fun setTotal(files: Long?, bytes: Long?) {
+                    Log.e(TAG, "testArchiveFile:setTotal $files $bytes")
+                }
+
+                override fun setCompleted(files: Long?, bytes: Long?) {
+                    Log.e(TAG, "testArchiveFile:setCompleted $files $bytes")
+                }
+            })
+
+        for (i in 0 until inArchive.numberOfItems) {
+            val filePath = inArchive.getStringProperty(i, PropID.PATH)
+            val fileSize = inArchive.getStringProperty(i, PropID.SIZE)
+            Log.e(TAG, "filePath: $filePath fileSize: $fileSize")
+        }
+        inArchive.extract(null, false, object : IArchiveExtractCallback {
+            override fun setTotal(total: Long) {
+                Log.e(TAG, "setTotal: $total")
+            }
+
+            override fun setCompleted(complete: Long) {
+                Log.e(TAG, "setCompleted: $complete")
+            }
+
+            override fun getStream(
+                index: Int,
+                extractAskMode: ExtractAskMode?
+            ): ISequentialOutStream {
+                return ISequentialOutStream { data ->
+                    Log.e(TAG, "write Data: ${data?.size}")
+                    data?.size ?: 0
+                }
+            }
+
+            override fun prepareOperation(extractAskMode: ExtractAskMode?) {
+                Log.e(TAG, "prepareOperation: $extractAskMode")
+            }
+
+            override fun setOperationResult(extractOperationResult: ExtractOperationResult?) {
+                Log.e(TAG, "setOperationResult: $extractOperationResult")
+                if (extractOperationResult != ExtractOperationResult.OK) {
+                    throw SevenZipException(extractOperationResult.toString())
+                }
+            }
+        })
+
+        inArchive.close()
+        inStream.close()
+    }
+
+
+    private fun testExtractSlowFile(file: File) {
+        Log.e(TAG, "initView: ${SevenZip.getSevenZipVersion()}")
+        Log.e(TAG, "initView: ${SevenZip.getSevenZipJBindingVersion()}")
+        Log.e(TAG, "initView: ${SevenZip.isInitializedSuccessfully()}")
+        Log.e(TAG, "testExtractSlowFile: ArchiveFileSize: ${file.length()}")
+        val randomAccessFile = RandomAccessFile(file, "r")
+        val inStream = RandomAccessFileInStream(randomAccessFile)
+        val inArchive = SevenZip.openInArchive(null, inStream, object : IArchiveOpenCallback {
+            override fun setTotal(files: Long?, bytes: Long?) {
+                Log.e(TAG, "setTotal: $files $bytes")
+            }
+
+            override fun setCompleted(files: Long?, bytes: Long?) {
+                Log.e(TAG, "setCompleted: $files $bytes")
+            }
+        })
+
+        val itemCount = inArchive.numberOfItems
+        for (i in 0 until itemCount) {
+            val filePath = inArchive.getStringProperty(i, PropID.PATH)
+            val fileSize = inArchive.getStringProperty(i, PropID.SIZE)
+            Log.e(TAG, "filePath:$filePath fileSize:$fileSize")
+            val result = inArchive.extractSlow(i) {
+                Log.e(TAG, "testExtractFile: ${it.size}")
+                it.size
+            }
+            if (result != ExtractOperationResult.OK) {
+                throw SevenZipException(result.toString())
+            }
+        }
+
+        inArchive.close()
+        inStream.close()
     }
 }
