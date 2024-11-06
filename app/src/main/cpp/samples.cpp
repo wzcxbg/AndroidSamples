@@ -13,6 +13,7 @@
 #include "include/preprocess_op.h"
 #include "models.h"
 #include "rar.hpp"
+#include "Util.h"
 
 std::string getMatShape(const cv::Mat &mat) {
     std::ostringstream oss;
@@ -198,111 +199,9 @@ void testOnnx2() {
     log("image: width:{}, height:{}, channels:{}, shape:{}",
         img.cols, img.rows, img.channels(), getMatShape(img));
 
-    float ratio_h{};
-    float ratio_w{};
-
-    cv::Mat srcimg;
-    cv::Mat resize_img;
-    img.copyTo(srcimg);
-
-    std::string limit_type_ = "max";
-    int limit_side_len_ = 960;
-    bool use_tensorrt_ = false;
-    PaddleOCR::ResizeImgType0().Run(img, resize_img, limit_type_,
-                                    limit_side_len_, ratio_h, ratio_w,
-                                    use_tensorrt_);
-
-    std::vector<float> mean_ = {0.485f, 0.456f, 0.406f};
-    std::vector<float> scale_ = {1 / 0.229f, 1 / 0.224f, 1 / 0.225f};
-    bool is_scale_ = true;
-    PaddleOCR::Normalize().Run(&resize_img, mean_, scale_, is_scale_);
-
-    std::vector<float> input(1 * 3 * resize_img.rows * resize_img.cols, 0.0f);
-    PaddleOCR::Permute().Run(&resize_img, input.data());
-
-
-    // 创建 ONNX Runtime 环境
-    Ort::Env env(ORT_LOGGING_LEVEL_WARNING, "test");
-
-    // 创建 ONNX Runtime 会话
-    Ort::SessionOptions session_options;
-    Ort::Session session(env, det_onnx.data(), det_onnx.size_bytes(), session_options);
-
-    // 获取输入和输出的名称和维度
-    Ort::AllocatorWithDefaultOptions allocator;
-    Ort::MemoryInfo memory_info = Ort::MemoryInfo::CreateCpu(
-            OrtDeviceAllocator, OrtMemTypeDefault);
-
-    std::vector<const char *> input_node_names = {"x"};
-    std::vector<const char *> output_node_names = {"sigmoid_0.tmp_0"};
-
-    // 创建输入张量
-    std::vector<int64_t> input_shape = {1, 3, resize_img.rows, resize_img.cols};
-    std::vector<float> input_data(input);
-
-    Ort::Value input_tensor = Ort::Value::CreateTensor<float>(
-            memory_info,
-            input_data.data(), input_data.size(),
-            input_shape.data(), input_shape.size()
-    );
-
-    // 运行模型
-    std::vector<Ort::Value> output_tensors = session.Run(
-            Ort::RunOptions{nullptr},
-            input_node_names.data(), &input_tensor, 1,
-            output_node_names.data(), 1
-    );
-
-    // 获取输出张量
-    float *output_data = output_tensors[0].GetTensorMutableData<float>();
-    std::vector<int64_t> output_shape = output_tensors[0].GetTensorTypeAndShapeInfo().GetShape();
-    int out_num = std::accumulate(output_shape.begin(), output_shape.end(), 1,
-                                  std::multiplies<int64_t>());
-    std::vector<float> out_data(output_data, output_data + out_num);
-
-    int n2 = output_shape[2];
-    int n3 = output_shape[3];
-    int n = n2 * n3;
-
-    std::vector<float> pred(n, 0.0);
-    std::vector<unsigned char> cbuf(n, ' ');
-
-    for (int i = 0; i < n; i++) {
-        pred[i] = float(out_data[i]);
-        cbuf[i] = (unsigned char)((out_data[i]) * 255);
-    }
-
-    cv::Mat cbuf_map(n2, n3, CV_8UC1, (unsigned char *)cbuf.data());
-    cv::Mat pred_map(n2, n3, CV_32F, (float *)pred.data());
-
-    double det_db_thresh_ = 0.3;
-    const double threshold = det_db_thresh_ * 255;
-    const double maxvalue = 255;
-
-    cv::Mat bit_map;
-    cv::threshold(cbuf_map, bit_map, threshold, maxvalue, cv::THRESH_BINARY);
-
-    double det_db_box_thresh_ = 0.5;
-    double det_db_unclip_ratio_ = 2.0;
-    std::string det_db_score_mode_ = "slow";
-    std::vector<std::vector<std::vector<int>>> boxes;
-    boxes = PaddleOCR::DBPostProcessor().BoxesFromBitmap(
-            pred_map, bit_map,
-            det_db_box_thresh_,
-            det_db_unclip_ratio_,
-            det_db_score_mode_);
-
-    boxes = PaddleOCR::DBPostProcessor().FilterTagDetRes(
-            boxes, ratio_h, ratio_w, srcimg);
-
     std::vector<PaddleOCR::OCRPredictResult> ocr_results;
-    for (int i = 0; i < boxes.size(); i++) {
-        PaddleOCR::OCRPredictResult res;
-        res.box = boxes[i];
-        ocr_results.push_back(res);
-    }
-    // sort boex from top to bottom, from left to right
-    PaddleOCR::Utility::sorted_boxes(ocr_results);
+    TextRectDetector detector;
+    detector.Run(img, ocr_results);
 
     log("dec: {}", ocr_results.size());
 
@@ -335,7 +234,7 @@ void testOnnx2() {
             cv::Mat srcimg;
             img_list[ino].copyTo(srcimg);
             cv::Mat resize_img;
-            PaddleOCR::ClsResizeImg().Run(srcimg, resize_img, use_tensorrt_,
+            PaddleOCR::ClsResizeImg().Run(srcimg, resize_img, false,
                                           cls_image_shape);
 
             std::vector<float> mean_ = {0.5f, 0.5f, 0.5f};
