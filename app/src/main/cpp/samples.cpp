@@ -139,7 +139,7 @@ void testOnnx() {
 
     // 创建 ONNX Runtime 会话
     Ort::SessionOptions session_options;
-    Ort::Session session(env, "/sdcard/Download/det.onnx", session_options);
+    Ort::Session session(env, det_onnx.data(), det_onnx.size_bytes(), session_options);
 
     // 获取输入和输出的名称和维度
     Ort::AllocatorWithDefaultOptions allocator;
@@ -190,19 +190,33 @@ void testOnnx() {
     cv::imwrite("/sdcard/Download/model_test_ret.png", result);
 }
 
-void testOnnx2() {
-    auto startTime = std::chrono::duration_cast<std::chrono::milliseconds>(
-            std::chrono::steady_clock::now().time_since_epoch()).count();
+class TimeMeasurer {
+    std::string tag;
+    std::chrono::time_point<std::chrono::system_clock> startTime =
+            std::chrono::system_clock::now();
+public:
+    explicit TimeMeasurer(const std::string &&tag) : tag(tag) {}
+    ~TimeMeasurer(){
+        auto totalTime = std::chrono::duration_cast<std::chrono::milliseconds>(
+                std::chrono::system_clock::now() - startTime).count();
+        log("{} elapsed time {}", tag, totalTime);
+    };
+};
 
+void testOnnx2() {
     // Read image
     cv::Mat img = cv::imread("/sdcard/Download/1.jpg");
     log("image: width:{}, height:{}, channels:{}, shape:{}",
         img.cols, img.rows, img.channels(), getMatShape(img));
 
+
+    // det
     std::vector<PaddleOCR::OCRPredictResult> ocr_results;
     TextRectDetector detector;
-    detector.Run(img, ocr_results);
-
+    {
+        TimeMeasurer measurer("det:");
+        detector.Run(img, ocr_results);
+    }
     log("dec: {}", ocr_results.size());
 
     // crop image
@@ -213,26 +227,33 @@ void testOnnx2() {
         img_list.push_back(crop_img);
     }
 
+
+    // cls
     std::vector<int> cls_labels(img_list.size(), 0);
     std::vector<float> cls_scores(img_list.size(), 0);
 
     TextClassifier classifier;
-    classifier.Run(img_list, cls_labels, cls_scores);
+    {
+        TimeMeasurer measurer("cls:");
+        classifier.Run(img_list, cls_labels, cls_scores);
+    }
 
-    // output cls results
     for (int i = 0; i < cls_labels.size(); i++) {
         ocr_results[i].cls_label = cls_labels[i];
         ocr_results[i].cls_score = cls_scores[i];
         log("cls: index:{} label:{} score:{}", i, cls_labels[i], cls_scores[i]);
     }
 
+    // rec
     std::vector<std::string> rec_texts(img_list.size(), "");
     std::vector<float> rec_text_scores(img_list.size(), 0);
 
     TextRecognizer recognizer;
-    recognizer.Run(img_list, rec_texts, rec_text_scores);
+    {
+        TimeMeasurer measurer("rec:");
+        recognizer.Run(img_list, rec_texts, rec_text_scores);
+    }
 
-    // output rec results
     for (int i = 0; i < rec_texts.size(); i++) {
         ocr_results[i].text = rec_texts[i];
         ocr_results[i].score = rec_text_scores[i];
