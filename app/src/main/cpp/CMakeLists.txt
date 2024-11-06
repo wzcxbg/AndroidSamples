@@ -99,7 +99,8 @@ endfunction()
 add_model_target(models
         models/det/det.onnx
         models/cls/cls.onnx
-        models/rec/rec.onnx)
+        models/rec/rec.onnx
+        models/rec/ppocr_keys_v1.txt)
 target_link_libraries(${CMAKE_PROJECT_NAME} models)
 
 add_subdirectory(3rdparty/unrar)
