@@ -8,6 +8,112 @@
 #include "include/preprocess_op.h"
 #include "models.h"
 
+class TextClassifier {
+    std::vector<float> mean_ = {0.5f, 0.5f, 0.5f};
+    std::vector<float> scale_ = {1 / 0.5f, 1 / 0.5f, 1 / 0.5f};
+    bool is_scale_ = true;
+    std::string precision_ = "fp32";
+    double cls_thresh = 0.9;
+    int cls_batch_num_ = 1;
+    // pre-process
+    PaddleOCR::ClsResizeImg resize_op_;
+    PaddleOCR::Normalize normalize_op_;
+    PaddleOCR::PermuteBatch permute_op_;
+
+    Ort::Env env = Ort::Env(ORT_LOGGING_LEVEL_WARNING, "cls");
+    std::unique_ptr<Ort::Session> session = {nullptr};
+
+public:
+    explicit TextClassifier() {
+        Ort::SessionOptions session_options;
+        session = std::make_unique<Ort::Session>(
+                env, cls_onnx.data(), cls_onnx.size_bytes(),
+                session_options);
+    }
+
+    void Run(std::vector<cv::Mat> img_list,
+             std::vector<int> &cls_labels,
+             std::vector<float> &cls_scores) {
+
+        int img_num = img_list.size();
+        std::vector<int> cls_image_shape = {3, 48, 192};
+        for (int beg_img_no = 0; beg_img_no < img_num;
+             beg_img_no += this->cls_batch_num_) {
+
+            int end_img_no = std::min(img_num, beg_img_no + this->cls_batch_num_);
+            int batch_num = end_img_no - beg_img_no;
+
+            // preprocess
+            std::vector<cv::Mat> norm_img_batch;
+            for (int ino = beg_img_no; ino < end_img_no; ino++) {
+                cv::Mat srcimg;
+                img_list[ino].copyTo(srcimg);
+                cv::Mat resize_img;
+                this->resize_op_.Run(srcimg, resize_img, false,
+                                     cls_image_shape);
+
+                this->normalize_op_.Run(&resize_img, this->mean_, this->scale_,
+                                        this->is_scale_);
+                if (resize_img.cols < cls_image_shape[2]) {
+                    cv::copyMakeBorder(resize_img, resize_img, 0, 0, 0,
+                                       cls_image_shape[2] - resize_img.cols,
+                                       cv::BORDER_CONSTANT, cv::Scalar(0, 0, 0));
+                }
+                norm_img_batch.push_back(resize_img);
+            }
+            std::vector<float> input(batch_num * cls_image_shape[0] *
+                                     cls_image_shape[1] * cls_image_shape[2],
+                                     0.0f);
+            this->permute_op_.Run(norm_img_batch, input.data());
+
+            // inference.
+            Ort::AllocatorWithDefaultOptions allocator;
+            auto input_name = session->GetInputNameAllocated(0, allocator);
+            auto output_name = session->GetOutputNameAllocated(0, allocator);
+
+            Ort::MemoryInfo memory_info = Ort::MemoryInfo::CreateCpu(
+                    OrtDeviceAllocator, OrtMemTypeDefault);
+            std::vector<int64_t> input_shape = {batch_num,
+                                                cls_image_shape[0],
+                                                cls_image_shape[1],
+                                                cls_image_shape[2]};
+            Ort::Value input_tensor = Ort::Value::CreateTensor<float>(
+                    memory_info,
+                    input.data(), input.size(),
+                    input_shape.data(), input_shape.size());
+
+            std::vector<const char *> input_names = {input_name.get()};
+            std::vector<const char *> output_names = {output_name.get()};
+            std::vector<Ort::Value> output_tensors = session->Run(
+                    Ort::RunOptions{nullptr},
+                    input_names.data(), &input_tensor, 1,
+                    output_names.data(), 1);
+
+            auto *output_data = output_tensors[0].GetTensorMutableData<float>();
+            std::vector<int64_t> output_shape = output_tensors[0].GetTensorTypeAndShapeInfo().GetShape();
+            int out_num = std::accumulate(output_shape.begin(), output_shape.end(),
+                                          1, std::multiplies<int64_t>());
+            std::vector<float> out_data(output_data, output_data + out_num);
+
+            std::vector<int64_t> predict_shape = output_shape;
+            std::vector<float> predict_batch = out_data;
+
+            // postprocess
+            for (int batch_idx = 0; batch_idx < predict_shape[0]; batch_idx++) {
+                int label = int(
+                        PaddleOCR::Utility::argmax(&predict_batch[batch_idx * predict_shape[1]],
+                                                   &predict_batch[(batch_idx + 1) *
+                                                                  predict_shape[1]]));
+                float score = float(*std::max_element(
+                        &predict_batch[batch_idx * predict_shape[1]],
+                        &predict_batch[(batch_idx + 1) * predict_shape[1]]));
+                cls_labels[beg_img_no + batch_idx] = label;
+                cls_scores[beg_img_no + batch_idx] = score;
+            }
+        }
+    }
+};
+
 class TextRectDetector {
     std::string limit_type_ = "max";            //max
     int limit_side_len_ = 960;                  //960
@@ -70,12 +176,12 @@ public:
         Ort::AllocatorWithDefaultOptions allocator;
         auto input_name = session->GetInputNameAllocated(0, allocator);
         auto output_name = session->GetOutputNameAllocated(0, allocator);
-        auto input_shape_str = formatShape(session->GetInputTypeInfo(0)
-                                                   .GetTensorTypeAndShapeInfo().GetShape());
-        auto output_shape_str = formatShape(session->GetOutputTypeInfo(0)
-                                                    .GetTensorTypeAndShapeInfo().GetShape());
-        log("input: {} shape: {}", input_name.get(), input_shape_str);
-        log("output: {} shape: {}", output_name.get(), output_shape_str);
+//        auto input_shape_str = formatShape(session->GetInputTypeInfo(0)
+//                                                   .GetTensorTypeAndShapeInfo().GetShape());
+//        auto output_shape_str = formatShape(session->GetOutputTypeInfo(0)
+//                                                    .GetTensorTypeAndShapeInfo().GetShape());
+//        log("input: {} shape: {}", input_name.get(), input_shape_str);
+//        log("output: {} shape: {}", output_name.get(), output_shape_str);
 
 
         // 设置输入获取输出
