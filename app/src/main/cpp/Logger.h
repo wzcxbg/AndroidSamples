@@ -6,6 +6,8 @@
 #include <type_traits>
 #include <android/log.h>
 
+#include <functional>
+
 namespace logger_details {
     template<class CharT, class... Args>
     struct base_fmt_str_with_loc : public std::basic_format_string<CharT, Args...> {
@@ -47,3 +49,28 @@ void log(const logger_details::fmt_str_with_loc<Types...> fmt, Types &&... args)
     std::string logMsg = std::format("{}:{} {}", fileName, line, msg);
     __android_log_print(ANDROID_LOG_ERROR, "LOG", "%s", logMsg.c_str());
 }
+
+namespace measure_details {
+    template<class T, std::enable_if_t<!std::is_void_v<decltype(std::declval<T>()())>, int> = 0>
+    auto measure_time(T fun, const char *tag) -> auto {
+        auto start = std::chrono::system_clock::now();
+        auto ret = fun();
+        auto end = std::chrono::system_clock::now();
+        auto total = std::chrono::duration_cast<std::chrono::milliseconds>(
+                end - start).count();
+        log("{} elapsed time {}", tag, total);
+        return ret;
+    }
+
+    template<class T, std::enable_if_t<std::is_void_v<decltype(std::declval<T>()())>, int> = 0>
+    void measure_time(T fun, const char *tag) {
+        auto start = std::chrono::system_clock::now();
+        fun();
+        auto end = std::chrono::system_clock::now();
+        auto total = std::chrono::duration_cast<std::chrono::milliseconds>(
+                end - start).count();
+        log("{} elapsed time {}", tag, total);
+    }
+}
+
+#define MeasureTime(func) measure_details::measure_time(std::function([&]() { return func; }), #func)

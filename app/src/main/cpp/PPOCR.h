@@ -8,6 +8,109 @@
 #include "include/preprocess_op.h"
 #include "models.h"
 
+struct RecognizeResult {
+    std::string text{};
+    float score{};
+};
+
+struct ClassifyResult {
+    int label{};
+    float score{};
+};
+
+struct DetectResult {
+    //std::array<std::array<int, 2>, 4> boxes;
+    std::vector<std::vector<int>> box;
+    struct Point {int x, y;};
+    const Point left() const { return Point{box[0][0], box[0][1]}; }
+    const Point top() const { return Point{box[1][0], box[1][1]}; }
+    const Point right() const { return Point{box[2][0], box[2][1]}; }
+    const Point bottom() const { return Point{box[3][0], box[3][1]}; }
+};
+
+struct OcrResult {
+    DetectResult det_ret;
+    ClassifyResult cls_ret;
+    RecognizeResult rec_ret;
+};
+
+namespace Utility {
+
+    void sorted_boxes(std::vector<DetectResult> &ocr_result) {
+        //将文本框按从左往右，从上往下的顺序排列
+        //当Y轴位置相近时，优先按X轴坐标排序
+        std::sort(ocr_result.begin(), ocr_result.end(), [](
+                const DetectResult &r1,
+                const DetectResult &r2) -> bool {
+            if (r1.left().y != r2.left().y &&
+                std::abs(r1.left().y - r2.left().y) >= 10) {
+                return (r1.left().y < r2.left().y);
+            } else {
+                return (r1.left().x < r2.left().x);
+            }
+        });
+    }
+
+    cv::Mat resize(const cv::Mat &image, int tar_w = 960, int tar_h = 960) {
+        // 将图片数据预处理（只支持BGR），并转换为 [batch, channel, height, width]
+        // 形状的内存连续的cv::Mat
+        std::vector<cv::Mat> channels;
+        cv::split(image, channels);
+        std::reverse(channels.begin(), channels.end());
+        std::vector<float> mean = {0.485, 0.456, 0.406};
+        std::vector<float> std = {0.229, 0.224, 0.225};
+        std::vector<float> alpha(3);
+        std::vector<float> beta(3);
+        for (int i = 0; i < 3; ++i) {
+            alpha[i] = 1.0f / 255.0f / std[i];
+            beta[i] = -mean[i] / std[i];
+        }
+        std::vector<int> dims = {3, tar_h, tar_w};
+        cv::Mat result(int(dims.size()), dims.data(), CV_32FC1);
+        u_long channelBytes = tar_h * tar_w * result.elemSize();
+        for (int i = 0; i < 3; ++i) {
+            cv::Mat resultCh(tar_h, tar_w, CV_32FC1, result.data + channelBytes * i);
+            channels[i].convertTo(channels[i], CV_32FC1, alpha[i], +beta[i]);
+            cv::resize(channels[i], resultCh, {tar_w, tar_h});
+        }
+        return result;
+    }
+
+    template<class T>
+    long compare_same_count(std::span<T> data1, std::span<T> data2) {
+        int same_count = 0;
+        for (int i = 0; i < std::min(data1.size(), data2.size()); ++i) {
+            if (data1[i] == data2[i]) {
+                same_count++;
+                continue;
+            }
+        }
+        return same_count;
+    }
+
+    std::string format_shape(const std::vector<int64_t> shape) {
+        std::ostringstream oss;
+        oss << "[";
+        for (size_t i = 0; i < shape.size(); ++i) {
+            oss << shape[i];
+            if (i < shape.size() - 1) oss << ", ";
+        }
+        oss << "]";
+        return oss.str();
+    }
+
+    std::string format_shape(const cv::Mat &mat) {
+        std::ostringstream oss;
+        oss << "[";
+        for (int i = 0; i < mat.dims; ++i) {
+            oss << mat.size[i];
+            if (i < mat.dims - 1) oss << " x ";
+        }
+        oss << "]";
+        return oss.str();
+    }
+}
+
 class TextRecognizer {
     std::vector<float> mean_ = {0.5f, 0.5f, 0.5f};
     std::vector<float> scale_ = {1 / 0.5f, 1 / 0.5f, 1 / 0.5f};
@@ -39,9 +142,11 @@ public:
         this->label_list_ = ReadDict();
     }
 
-    void Run(std::vector<cv::Mat> img_list,
-             std::vector<std::string> &rec_texts,
-             std::vector<float> &rec_text_scores) {
+    std::vector<RecognizeResult> Run(const std::vector<cv::Mat> &img_list) {
+        std::vector<RecognizeResult> result;
+        result.reserve(img_list.size());
+        result.resize(img_list.size());
+
         int img_num = img_list.size();
         std::vector<float> width_list;
         for (int i = 0; i < img_num; i++) {
@@ -142,10 +247,10 @@ public:
                 if (std::isnan(score)) {
                     continue;
                 }
-                rec_texts[indices[beg_img_no + m]] = str_res;
-                rec_text_scores[indices[beg_img_no + m]] = score;
+                result[indices[beg_img_no + m]] = {str_res, score};
             }
         }
+        return result;
     }
 
     static std::vector<std::string> ReadDict() {
@@ -187,9 +292,10 @@ public:
                 session_options);
     }
 
-    void Run(std::vector<cv::Mat> img_list,
-             std::vector<int> &cls_labels,
-             std::vector<float> &cls_scores) {
+    std::vector<ClassifyResult> Run(const std::vector<cv::Mat> &img_list) {
+        std::vector<ClassifyResult> result;
+        result.reserve(img_list.size());
+        result.resize(img_list.size());
 
         int img_num = img_list.size();
         std::vector<int> cls_image_shape = {3, 48, 192};
@@ -262,16 +368,11 @@ public:
                 float score = float(*std::max_element(
                         &predict_batch[batch_idx * predict_shape[1]],
                         &predict_batch[(batch_idx + 1) * predict_shape[1]]));
-                cls_labels[beg_img_no + batch_idx] = label;
-                cls_scores[beg_img_no + batch_idx] = score;
+                result[beg_img_no + batch_idx] = {label, score};
             }
         }
+        return result;
     }
-};
-
-struct DetectResult {
-    struct Point { int x, y; }
-    left, top, right, bottom;
 };
 
 class TextDetector {
@@ -313,10 +414,7 @@ public:
         this->use_dilation_ = true;
     }
 
-    std::vector<DetectResult> Run(
-            const cv::Mat &img,
-            std::vector<PaddleOCR::OCRPredictResult> &ocr_results) {
-
+    std::vector<DetectResult> Run(const cv::Mat &img) {
         float ratio_h{};
         float ratio_w{};
 
@@ -383,8 +481,7 @@ public:
         cv::Mat bit_map;
         cv::threshold(cbuf_map, bit_map, threshold, maxvalue, cv::THRESH_BINARY);
         if (use_dilation_) {
-            cv::Mat dila_ele =
-                    cv::getStructuringElement(cv::MORPH_RECT, cv::Size(2, 2));
+            cv::Mat dila_ele = cv::getStructuringElement(cv::MORPH_RECT, cv::Size(2, 2));
             cv::dilate(bit_map, bit_map, dila_ele);
         }
 
@@ -394,36 +491,56 @@ public:
 
         boxes = post_processor_.FilterTagDetRes(boxes, ratio_h, ratio_w, srcimg);
 
-        for (int i = 0; i < boxes.size(); i++) {
-            PaddleOCR::OCRPredictResult res;
-            res.box = boxes[i];
-            ocr_results.push_back(res);
-        }
-        // sort boex from top to bottom, from left to right
-        PaddleOCR::Utility::sorted_boxes(ocr_results);
-
         std::vector<DetectResult> results;
-        results.resize(boxes.size());
-        for (int i = 0; i < boxes.size(); ++i) {
-            auto box = boxes[i];
-            results[i] = DetectResult{
-                    {box[0][0], box[0][1]},
-                    {box[1][0], box[1][1]},
-                    {box[2][0], box[2][1]},
-                    {box[3][0], box[3][1]},
-            };
+        results.reserve(boxes.size());
+        for (auto &box: boxes) {
+            results.emplace_back(box);
         }
+        Utility::sorted_boxes(results);
         return results;
     }
+};
 
-    static std::string formatShape(std::vector<int64_t> shape) {
-        std::ostringstream oss;
-        oss << "[";
-        for (size_t i = 0; i < shape.size(); ++i) {
-            oss << shape[i];
-            if (i < shape.size() - 1) oss << ", ";
+class PPOCR {
+    TextDetector detector;
+    TextClassifier classifier;
+    TextRecognizer recognizer;
+
+public:
+    std::vector<DetectResult> det(const cv::Mat &img) {
+        return detector.Run(img);
+    }
+
+    std::vector<ClassifyResult> cls(const std::vector<cv::Mat> &img_list) {
+        return classifier.Run(img_list);
+    }
+
+    std::vector<RecognizeResult> rec(const std::vector<cv::Mat> &img_list) {
+        return recognizer.Run(img_list);
+    }
+
+    std::vector<OcrResult> ocr(const cv::Mat &img) {
+        std::vector<OcrResult> results;
+        std::vector<DetectResult> detectResults;
+        std::vector<ClassifyResult> classifyResults;
+        std::vector<RecognizeResult> recognizeResults;
+
+        detectResults = det(img);
+        std::vector<cv::Mat> img_list;
+        for (auto &detectResult: detectResults) {
+            cv::Mat crop_img;
+            crop_img = PaddleOCR::Utility::GetRotateCropImage(img, detectResult.box);
+            img_list.push_back(crop_img);
         }
-        oss << "]";
-        return oss.str();
+        classifyResults = cls(img_list);
+        recognizeResults = rec(img_list);
+
+        results.reserve(img_list.size());
+        for (int i = 0; i < img_list.size(); ++i) {
+            results.emplace_back(detectResults[i],
+                                 classifyResults[i],
+                                 recognizeResults[i]);
+        }
+        return results;
     }
 };
