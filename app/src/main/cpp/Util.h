@@ -269,6 +269,11 @@ public:
     }
 };
 
+struct DetectResult {
+    struct Point { int x, y; }
+    left, top, right, bottom;
+};
+
 class TextDetector {
     std::string limit_type_ = "max";            //max
     int limit_side_len_ = 960;                  //960
@@ -308,7 +313,10 @@ public:
         this->use_dilation_ = true;
     }
 
-    void Run(const cv::Mat &img, std::vector<PaddleOCR::OCRPredictResult> &ocr_results) {
+    std::vector<DetectResult> Run(
+            const cv::Mat &img,
+            std::vector<PaddleOCR::OCRPredictResult> &ocr_results) {
+
         float ratio_h{};
         float ratio_w{};
 
@@ -393,6 +401,19 @@ public:
         }
         // sort boex from top to bottom, from left to right
         PaddleOCR::Utility::sorted_boxes(ocr_results);
+
+        std::vector<DetectResult> results;
+        results.resize(boxes.size());
+        for (int i = 0; i < boxes.size(); ++i) {
+            auto box = boxes[i];
+            results[i] = DetectResult{
+                    {box[0][0], box[0][1]},
+                    {box[1][0], box[1][1]},
+                    {box[2][0], box[2][1]},
+                    {box[3][0], box[3][1]},
+            };
+        }
+        return results;
     }
 
     static std::string formatShape(std::vector<int64_t> shape) {

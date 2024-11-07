@@ -213,11 +213,19 @@ void testOnnx2() {
     // det
     std::vector<PaddleOCR::OCRPredictResult> ocr_results;
     TextDetector detector;
+    std::vector<DetectResult> detectResults;
     {
         TimeMeasurer measurer("det:");
-        detector.Run(img, ocr_results);
+        detectResults = detector.Run(img, ocr_results);
     }
-    log("dec: {}", ocr_results.size());
+    for (int i = 0; i < detectResults.size(); ++i) {
+        auto detectResult = detectResults[i];
+        log("dec: index:{} left:({},{}) top:({},{}) right:({},{}) bottom:({},{})", i,
+            detectResult.left.x, detectResult.left.y,
+            detectResult.top.x, detectResult.top.y,
+            detectResult.right.x, detectResult.right.y,
+            detectResult.bottom.x, detectResult.bottom.y);
+    }
 
     // crop image
     std::vector<cv::Mat> img_list;
