@@ -9,7 +9,6 @@
 #include "models.h"
 
 class TextRecognizer {
-
     std::vector<float> mean_ = {0.5f, 0.5f, 0.5f};
     std::vector<float> scale_ = {1 / 0.5f, 1 / 0.5f, 1 / 0.5f};
     bool is_scale_ = true;
@@ -224,10 +223,6 @@ public:
             this->permute_op_.Run(norm_img_batch, input.data());
 
             // inference.
-            Ort::AllocatorWithDefaultOptions allocator;
-            auto input_name = session->GetInputNameAllocated(0, allocator);
-            auto output_name = session->GetOutputNameAllocated(0, allocator);
-
             Ort::MemoryInfo memory_info = Ort::MemoryInfo::CreateCpu(
                     OrtDeviceAllocator, OrtMemTypeDefault);
             std::vector<int64_t> input_shape = {batch_num,
@@ -239,6 +234,9 @@ public:
                     input.data(), input.size(),
                     input_shape.data(), input_shape.size());
 
+            Ort::AllocatorWithDefaultOptions allocator;
+            auto input_name = session->GetInputNameAllocated(0, allocator);
+            auto output_name = session->GetOutputNameAllocated(0, allocator);
             std::vector<const char *> input_names = {input_name.get()};
             std::vector<const char *> output_names = {output_name.get()};
             std::vector<Ort::Value> output_tensors = session->Run(
@@ -271,7 +269,7 @@ public:
     }
 };
 
-class TextRectDetector {
+class TextDetector {
     std::string limit_type_ = "max";            //max
     int limit_side_len_ = 960;                  //960
 
@@ -299,7 +297,7 @@ class TextRectDetector {
     std::unique_ptr<Ort::Session> session = {nullptr};
 
 public:
-    explicit TextRectDetector() {
+    explicit TextDetector() {
         // 创建 ONNX Runtime 会话
         Ort::SessionOptions session_options;
         session = std::make_unique<Ort::Session>(
@@ -329,18 +327,6 @@ public:
 
 
         // inference.
-        // 获取输入和输出的名称和维度
-        Ort::AllocatorWithDefaultOptions allocator;
-        auto input_name = session->GetInputNameAllocated(0, allocator);
-        auto output_name = session->GetOutputNameAllocated(0, allocator);
-//        auto input_shape_str = formatShape(session->GetInputTypeInfo(0)
-//                                                   .GetTensorTypeAndShapeInfo().GetShape());
-//        auto output_shape_str = formatShape(session->GetOutputTypeInfo(0)
-//                                                    .GetTensorTypeAndShapeInfo().GetShape());
-//        log("input: {} shape: {}", input_name.get(), input_shape_str);
-//        log("output: {} shape: {}", output_name.get(), output_shape_str);
-
-
         // 设置输入获取输出
         Ort::MemoryInfo memory_info = Ort::MemoryInfo::CreateCpu(
                 OrtDeviceAllocator, OrtMemTypeDefault);
@@ -350,6 +336,10 @@ public:
                 input.data(), input.size(),
                 input_shape.data(), input_shape.size());
 
+        // 获取输入和输出的名称和维度
+        Ort::AllocatorWithDefaultOptions allocator;
+        auto input_name = session->GetInputNameAllocated(0, allocator);
+        auto output_name = session->GetOutputNameAllocated(0, allocator);
         std::vector<const char *> input_names = {input_name.get()};
         std::vector<const char *> output_names = {output_name.get()};
         std::vector<Ort::Value> output_tensors = session->Run(

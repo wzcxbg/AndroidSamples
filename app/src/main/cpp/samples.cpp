@@ -212,7 +212,7 @@ void testOnnx2() {
 
     // det
     std::vector<PaddleOCR::OCRPredictResult> ocr_results;
-    TextRectDetector detector;
+    TextDetector detector;
     {
         TimeMeasurer measurer("det:");
         detector.Run(img, ocr_results);
