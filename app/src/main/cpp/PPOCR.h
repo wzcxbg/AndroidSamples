@@ -527,12 +527,19 @@ public:
 
         detectResults = det(img);
         std::vector<cv::Mat> img_list;
+        img_list.reserve(detectResults.size());
         for (auto &detectResult: detectResults) {
             cv::Mat crop_img;
             crop_img = PaddleOCR::Utility::GetRotateCropImage(img, detectResult.box);
-            img_list.push_back(crop_img);
+            img_list.emplace_back(crop_img);
         }
         classifyResults = cls(img_list);
+        for (int i = 0; i < img_list.size(); i++) {
+            if (classifyResults[i].label % 2 == 1 &&
+                classifyResults[i].score > 0.9) {
+                cv::rotate(img_list[i], img_list[i], 1);
+            }
+        }
         recognizeResults = rec(img_list);
 
         results.reserve(img_list.size());
