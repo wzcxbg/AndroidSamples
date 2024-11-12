@@ -16,4 +16,4 @@ dependencyResolutionManagement {
 
 rootProject.name = "AndroidSamples"
 include(":app")
- 
+include(":sample-di")
