@@ -9,7 +9,7 @@
         android:icon="@drawable/baseline_star_24"
         android:title="Star" />
     <item
-        android:id="@+id/settings"
-        android:icon="@drawable/baseline_settings_24"
-        android:title="Settings" />
+        android:id="@+id/mine"
+        android:icon="@drawable/baseline_supervisor_account_24"
+        android:title="Mine" />
 </menu>

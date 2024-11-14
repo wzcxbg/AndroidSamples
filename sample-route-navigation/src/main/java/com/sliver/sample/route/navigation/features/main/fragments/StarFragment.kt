@@ -1,4 +1,4 @@
-package com.sliver.sample.route.navigation.fragments
+package com.sliver.sample.route.navigation.features.main.fragments
 
 import android.os.Bundle
 import android.view.LayoutInflater
@@ -8,6 +8,7 @@ import androidx.fragment.app.Fragment
 import com.sliver.sample.route.navigation.R
 
 class StarFragment : Fragment() {
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
     }
