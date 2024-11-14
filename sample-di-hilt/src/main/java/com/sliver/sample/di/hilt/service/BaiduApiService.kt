@@ -1,4 +1,4 @@
-package com.sliver.sampledi.service
+package com.sliver.sample.di.hilt.service
 
 import okhttp3.ResponseBody
 import retrofit2.Call

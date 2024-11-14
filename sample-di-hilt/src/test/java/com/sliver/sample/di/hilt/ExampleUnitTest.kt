@@ -1,4 +1,4 @@
-package com.sliver.sampledi
+package com.sliver.sample.di.hilt
 
 import org.junit.Test
 

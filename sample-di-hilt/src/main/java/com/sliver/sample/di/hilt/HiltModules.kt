@@ -1,4 +1,4 @@
-package com.sliver.sampledi
+package com.sliver.sample.di.hilt
 
 import android.app.Application
 import android.content.Context
@@ -6,7 +6,7 @@ import android.util.Log
 import androidx.activity.viewModels
 import androidx.appcompat.app.AppCompatActivity
 import androidx.lifecycle.ViewModel
-import com.sliver.sampledi.service.BaiduApiService
+import com.sliver.sample.di.hilt.service.BaiduApiService
 import dagger.Binds
 import dagger.Module
 import dagger.Provides

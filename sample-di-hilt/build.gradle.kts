@@ -6,11 +6,11 @@ plugins {
 }
 
 android {
-    namespace = "com.sliver.sampledi"
+    namespace = "com.sliver.sample.di.hilt"
     compileSdk = 35
 
     defaultConfig {
-        applicationId = "com.sliver.sampledi"
+        applicationId = "com.sliver.sample.di.hilt"
         minSdk = 24
         targetSdk = 35
         versionCode = 1

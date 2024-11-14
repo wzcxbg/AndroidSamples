@@ -1,4 +1,4 @@
-package com.sliver.sampledi
+package com.sliver.sample.di.hilt
 
 import android.os.Bundle
 import android.util.Log
@@ -8,7 +8,7 @@ import androidx.activity.viewModels
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.view.ViewCompat
 import androidx.core.view.WindowInsetsCompat
-import com.sliver.sampledi.service.BaiduApiService
+import com.sliver.sample.di.hilt.service.BaiduApiService
 import dagger.hilt.android.AndroidEntryPoint
 import okhttp3.ResponseBody
 import retrofit2.Call
