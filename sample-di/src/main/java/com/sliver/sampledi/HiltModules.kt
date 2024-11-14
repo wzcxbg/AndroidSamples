@@ -132,7 +132,10 @@ class NetworkRepository @Inject constructor(
 )
 
 
-//3. 搭配ViewModel使用
+//3. 搭配ViewModel及其他库使用
+//ListenableWorker @HiltWorker
+//Views ViewModel @HiltViewModel
+//Compose ViewModel @hiltViewModel
 @HiltViewModel
 class TestViewModel @Inject constructor(
     private val logger: Logger

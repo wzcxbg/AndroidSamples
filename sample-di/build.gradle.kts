@@ -51,6 +51,23 @@ dependencies {
     implementation("com.squareup.okhttp3:okhttp:4.12.0")
     implementation("com.squareup.retrofit2:retrofit:2.11.0")
 
+    // A fast dependency injector for Android and Java.
     implementation("com.google.dagger:hilt-android:2.52")
     ksp("com.google.dagger:hilt-compiler:2.52")
+
+    // AndroidX Hilt Extension Annotations
+    implementation("androidx.hilt:hilt-common:1.2.0")
+    ksp("androidx.hilt:hilt-compiler:1.2.0")
+
+    // Android Lifecycle WorkManager Hilt Extension
+    implementation("androidx.hilt:hilt-work:1.2.0")
+
+    // AndroidX Hilt Extension Compiler
+    implementation("androidx.hilt:hilt-navigation:1.2.0")
+
+    // Android Navigation Fragment Hilt Extension
+    implementation("androidx.hilt:hilt-navigation-fragment:1.2.0")
+
+    // Navigation Compose Hilt Integration
+    implementation("androidx.hilt:hilt-navigation-compose:1.2.0")
 }
