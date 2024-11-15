@@ -25,9 +25,13 @@ class MineFragment : Fragment() {
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
-        val textView = view.findViewById<TextView>(R.id.goto_settings)
+        val gotoProfile = view.findViewById<TextView>(R.id.goto_profile)
+        val gotoSettings = view.findViewById<TextView>(R.id.goto_settings)
         val navController = requireActivity().findNavController(R.id.nav_host)
-        textView.setOnClickListener {
+        gotoProfile.setOnClickListener {
+            navController.navigate(Root.Profile())
+        }
+        gotoSettings.setOnClickListener {
             navController.navigate(Root.Settings())
         }
     }
