@@ -3,7 +3,9 @@ package com.sliver.sample.route.navigation
 import androidx.navigation.NavController
 import androidx.navigation.activity
 import androidx.navigation.createGraph
+import androidx.navigation.fragment.dialog
 import androidx.navigation.fragment.fragment
+import com.sliver.sample.route.navigation.features.loading.LoadingDialog
 import com.sliver.sample.route.navigation.features.main.MainFragment
 import com.sliver.sample.route.navigation.features.main.fragments.HomeFragment
 import com.sliver.sample.route.navigation.features.main.fragments.MineFragment
@@ -21,6 +23,9 @@ sealed interface Root {
 
     @Serializable
     data class Profile(val name: String = "Profile") : Root
+
+    @Serializable
+    data class Loading(val name: String = "Loading") : Root
 }
 
 sealed interface Main {
@@ -41,6 +46,7 @@ fun NavController.setupMainActivityNavGraph() {
         activity<Root.Profile> {
             activityClass = ProfileActivity::class
         }
+        dialog<LoadingDialog, Root.Loading>()
     }
 }
 
