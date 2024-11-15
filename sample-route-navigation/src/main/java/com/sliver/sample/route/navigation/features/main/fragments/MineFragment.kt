@@ -7,6 +7,7 @@ import android.view.ViewGroup
 import android.widget.TextView
 import androidx.fragment.app.Fragment
 import androidx.navigation.findNavController
+import androidx.navigation.navOptions
 import com.sliver.sample.route.navigation.R
 import com.sliver.sample.route.navigation.Root
 
@@ -34,7 +35,14 @@ class MineFragment : Fragment() {
             navController.navigate(Root.Profile())
         }
         gotoSettings.setOnClickListener {
-            navController.navigate(Root.Settings())
+            navController.navigate(Root.Settings(), navOptions {
+                anim {
+                    enter = android.R.anim.slide_in_left
+                    exit = android.R.anim.slide_out_right
+                    popEnter = android.R.anim.slide_in_left
+                    popExit = android.R.anim.slide_out_right
+                }
+            })
         }
         showDialog.setOnClickListener {
             navController.navigate(Root.Loading())
