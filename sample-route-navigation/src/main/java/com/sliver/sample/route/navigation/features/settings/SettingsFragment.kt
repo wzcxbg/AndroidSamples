@@ -6,6 +6,7 @@ import android.view.View
 import android.view.ViewGroup
 import androidx.fragment.app.Fragment
 import com.sliver.sample.route.navigation.R
+import com.sliver.sample.route.navigation.printNavArgs
 
 class SettingsFragment : Fragment() {
 
@@ -18,6 +19,11 @@ class SettingsFragment : Fragment() {
         savedInstanceState: Bundle?
     ): View? {
         return inflater.inflate(R.layout.fragment_settings, container, false)
+    }
+
+    override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
+        super.onViewCreated(view, savedInstanceState)
+        printNavArgs()
     }
 
     companion object {

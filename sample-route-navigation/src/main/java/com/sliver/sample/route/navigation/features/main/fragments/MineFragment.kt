@@ -28,6 +28,7 @@ class MineFragment : Fragment() {
         val gotoProfile = view.findViewById<TextView>(R.id.goto_profile)
         val gotoSettings = view.findViewById<TextView>(R.id.goto_settings)
         val showDialog = view.findViewById<TextView>(R.id.show_dialog)
+        val openUrl = view.findViewById<TextView>(R.id.open_url)
         val navController = requireActivity().findNavController(R.id.nav_host)
         gotoProfile.setOnClickListener {
             navController.navigate(Root.Profile())
@@ -37,6 +38,9 @@ class MineFragment : Fragment() {
         }
         showDialog.setOnClickListener {
             navController.navigate(Root.Loading())
+        }
+        openUrl.setOnClickListener {
+            navController.navigate(Root.WebPage("https://www.baidu.com"))
         }
     }
 
