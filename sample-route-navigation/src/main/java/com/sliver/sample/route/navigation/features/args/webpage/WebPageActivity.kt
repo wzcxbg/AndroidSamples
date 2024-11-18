@@ -1,4 +1,4 @@
-package com.sliver.sample.route.navigation.features.webpage
+package com.sliver.sample.route.navigation.features.args.webpage
 
 import android.os.Bundle
 import android.util.Log
@@ -17,7 +17,7 @@ import com.sliver.sample.route.navigation.Root
 import com.sliver.sample.route.navigation.printNavArgs
 
 class WebPageActivity : AppCompatActivity() {
-    private val viewModel by viewModels<WebPageViewModel> { WebPageViewModel.Factory }
+    private val viewModel by viewModels<WebPageViewModel> { WebPageViewModel }
 
     private val url by lazy { intent?.getStringExtra("url")!! }
 

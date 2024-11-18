@@ -34,9 +34,9 @@ class MainFragment : Fragment() {
         val navigationView = view.findViewById<BottomNavigationView>(R.id.bottom_navigation)
         navigationView.setOnItemSelectedListener {
             when (it.itemId) {
-                R.id.home -> navController.navigate(Main.Home())
-                R.id.star -> navController.navigate(Main.Star())
-                R.id.mine -> navController.navigate(Main.Mine())
+                R.id.home -> navController.navigate(Main.Home)
+                R.id.star -> navController.navigate(Main.Star)
+                R.id.mine -> navController.navigate(Main.Mine)
             }
             true
         }

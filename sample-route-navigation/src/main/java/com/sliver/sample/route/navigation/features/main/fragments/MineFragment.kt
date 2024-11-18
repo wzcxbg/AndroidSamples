@@ -26,12 +26,11 @@ class MineFragment : Fragment() {
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
-        val gotoSettings = view.findViewById<TextView>(R.id.goto_settings)
         val showDialog = view.findViewById<TextView>(R.id.show_dialog)
         val openUrl = view.findViewById<TextView>(R.id.open_url)
         val navController = requireActivity().findNavController(R.id.nav_host)
-        gotoSettings.setOnClickListener {
-            navController.navigate(Root.Settings(), navOptions {
+        showDialog.setOnClickListener {
+            navController.navigate(Root.Loading("Loading..."), navOptions {
                 anim {
                     enter = android.R.anim.slide_in_left
                     exit = android.R.anim.slide_out_right
@@ -40,11 +39,15 @@ class MineFragment : Fragment() {
                 }
             })
         }
-        showDialog.setOnClickListener {
-            navController.navigate(Root.Loading())
-        }
         openUrl.setOnClickListener {
-            navController.navigate(Root.WebPage("https://www.baidu.com"))
+            navController.navigate(Root.WebPage("https://www.baidu.com"), navOptions {
+                anim {
+                    enter = android.R.anim.slide_in_left
+                    exit = android.R.anim.slide_out_right
+                    popEnter = android.R.anim.slide_in_left
+                    popExit = android.R.anim.slide_out_right
+                }
+            })
         }
     }
 

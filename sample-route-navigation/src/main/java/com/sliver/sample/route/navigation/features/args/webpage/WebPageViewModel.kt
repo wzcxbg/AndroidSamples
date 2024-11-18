@@ -1,4 +1,4 @@
-package com.sliver.sample.route.navigation.features.webpage
+package com.sliver.sample.route.navigation.features.args.webpage
 
 import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.ViewModel

@@ -10,7 +10,7 @@
         android:supportsRtl="true"
         android:theme="@style/Theme.AndroidSamples">
         <activity
-            android:name=".features.webpage.WebPageActivity"
+            android:name=".features.args.webpage.WebPageActivity"
             android:exported="false" />
         <activity
             android:name=".MainActivity"

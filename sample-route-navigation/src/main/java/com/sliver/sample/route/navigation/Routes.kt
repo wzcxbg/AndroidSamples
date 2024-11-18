@@ -5,24 +5,20 @@ import androidx.navigation.activity
 import androidx.navigation.createGraph
 import androidx.navigation.fragment.dialog
 import androidx.navigation.fragment.fragment
-import com.sliver.sample.route.navigation.features.loading.LoadingDialog
+import com.sliver.sample.route.navigation.features.args.dialog.LoadingDialog
+import com.sliver.sample.route.navigation.features.args.webpage.WebPageActivity
 import com.sliver.sample.route.navigation.features.main.MainFragment
 import com.sliver.sample.route.navigation.features.main.fragments.HomeFragment
 import com.sliver.sample.route.navigation.features.main.fragments.MineFragment
 import com.sliver.sample.route.navigation.features.main.fragments.StarFragment
-import com.sliver.sample.route.navigation.features.settings.SettingsFragment
-import com.sliver.sample.route.navigation.features.webpage.WebPageActivity
 import kotlinx.serialization.Serializable
 
 sealed interface Root {
     @Serializable
-    data class Main(val name: String = "Home") : Root
+    data object Main : Root
 
     @Serializable
-    data class Settings(val name: String = "Setting") : Root
-
-    @Serializable
-    data class Loading(val name: String = "Loading") : Root
+    data class Loading(val msg: String) : Root
 
     @Serializable
     data class WebPage(val url: String) : Root
@@ -30,19 +26,18 @@ sealed interface Root {
 
 sealed interface Main {
     @Serializable
-    data class Home(val name: String = "Home") : Main
+    data object Home : Main
 
     @Serializable
-    data class Star(val name: String = "Star") : Main
+    data object Star : Main
 
     @Serializable
-    data class Mine(val name: String = "Mine") : Main
+    data object Mine : Main
 }
 
 fun NavController.setupMainActivityNavGraph() {
-    graph = createGraph(Root.Main()) {
+    graph = createGraph(Root.Main) {
         fragment<MainFragment, Root.Main>()
-        fragment<SettingsFragment, Root.Settings>()
         activity<Root.WebPage> {
             activityClass = WebPageActivity::class
         }
@@ -51,7 +46,7 @@ fun NavController.setupMainActivityNavGraph() {
 }
 
 fun NavController.setupMainFragmentNavGraph() {
-    graph = createGraph(Main.Home()) {
+    graph = createGraph(Main.Home) {
         fragment<HomeFragment, Main.Home>()
         fragment<StarFragment, Main.Star>()
         fragment<MineFragment, Main.Mine>()
