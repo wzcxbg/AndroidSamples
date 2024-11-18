@@ -18,3 +18,4 @@ rootProject.name = "AndroidSamples"
 include(":app")
 include(":sample-di-hilt")
 include(":sample-route-navigation")
+include(":sample-preference")
