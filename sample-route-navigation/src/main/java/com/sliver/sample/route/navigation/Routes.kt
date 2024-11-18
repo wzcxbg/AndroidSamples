@@ -56,6 +56,7 @@ fun NavController.setupMainFragmentNavGraph() {
 
 // Navigation Dsl使用:
 // Both Dsl and xml: Navigator、NavDestination  Xml: NavAction、NavDirections
+// 总结: Navigation对Activity的兼容性很不好，问题点很多，只建议搭配Fragment使用
 
 // 注意点:
 // 使用Kotlin Dsl构造NavGraph时，不再使用NavAction和NavDirections
@@ -64,6 +65,7 @@ fun NavController.setupMainFragmentNavGraph() {
 // 使用Kotlin Dsl构造NavGraph时，无法给Activity设置DeepLink（从外部浏览器启动）
 // Navigation并未提供Activity.startActivityForResult的封装
 // 导航到Activity时无法获取NavController
+// Activity中无法使用navGraphViewModels创建ViewModel
 
 // 一些常见问题的解决方案:
 // 向上一个Fragment或Activity传递数据通用方式:
