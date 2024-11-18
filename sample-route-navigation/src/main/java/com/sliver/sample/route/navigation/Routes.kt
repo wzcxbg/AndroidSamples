@@ -10,7 +10,6 @@ import com.sliver.sample.route.navigation.features.main.MainFragment
 import com.sliver.sample.route.navigation.features.main.fragments.HomeFragment
 import com.sliver.sample.route.navigation.features.main.fragments.MineFragment
 import com.sliver.sample.route.navigation.features.main.fragments.StarFragment
-import com.sliver.sample.route.navigation.features.profile.ProfileActivity
 import com.sliver.sample.route.navigation.features.settings.SettingsFragment
 import com.sliver.sample.route.navigation.features.webpage.WebPageActivity
 import kotlinx.serialization.Serializable
@@ -21,9 +20,6 @@ sealed interface Root {
 
     @Serializable
     data class Settings(val name: String = "Setting") : Root
-
-    @Serializable
-    data class Profile(val name: String = "Profile") : Root
 
     @Serializable
     data class Loading(val name: String = "Loading") : Root
@@ -47,9 +43,6 @@ fun NavController.setupMainActivityNavGraph() {
     graph = createGraph(Root.Main()) {
         fragment<MainFragment, Root.Main>()
         fragment<SettingsFragment, Root.Settings>()
-        activity<Root.Profile> {
-            activityClass = ProfileActivity::class
-        }
         activity<Root.WebPage> {
             activityClass = WebPageActivity::class
         }
