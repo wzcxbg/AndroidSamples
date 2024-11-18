@@ -64,3 +64,23 @@ fun NavController.setupMainFragmentNavGraph() {
         fragment<MineFragment, Main.Mine>()
     }
 }
+
+
+// Navigation Dsl使用:
+// Both Dsl and xml: Navigator、NavDestination  Xml: NavAction、NavDirections
+
+// 注意点:
+// 使用Kotlin Dsl构造NavGraph时，不再使用NavAction和NavDirections
+// 使用Kotlin Dsl构造NavGraph时，NavigationUI无法直接绑定类似BottomNavigationView的控件
+// 使用Kotlin Dsl构造NavGraph时，无法使用SafeArg插件，无法使用by navArgs()
+// 使用Kotlin Dsl构造NavGraph时，无法给Activity设置DeepLink（从外部浏览器启动）
+// Navigation并未提供Activity.startActivityForResult的封装
+// 导航到Activity时无法获取NavController
+
+// 一些常见问题的解决方案:
+// 向上一个Fragment或Activity传递数据通用方式:
+// 直接导航到上一个页面并附加一些导航策略使得旧页面不再保存
+// 向上一个Fragment传递数据:
+// https://developer.android.com/guide/navigation/use-graph/programmatic?hl=zh-cn#returning_a_result
+// 向上一个Activity传递数据:
+// 这个页面单独使用Activity.startActivityForResul或registerActivityResult
