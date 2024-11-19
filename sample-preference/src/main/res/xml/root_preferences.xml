@@ -1,35 +1,147 @@
 <PreferenceScreen xmlns:app="http://schemas.android.com/apk/res-auto">
 
-    <PreferenceCategory app:title="@string/messages_header">
+    <PreferenceCategory
+        app:iconSpaceReserved="false"
+        app:title="模型设置">
+        <ListPreference
+            app:defaultValue="PaddleOCRv4"
+            app:entries="@array/det_model_entries"
+            app:entryValues="@array/det_model_entries"
+            app:iconSpaceReserved="false"
+            app:key="det_model"
+            app:title="检测"
+            app:useSimpleSummaryProvider="true" />
+        <ListPreference
+            app:defaultValue="PaddleOCRv4"
+            app:entries="@array/det_model_entries"
+            app:entryValues="@array/det_model_entries"
+            app:iconSpaceReserved="false"
+            app:key="det_model"
+            app:title="分类"
+            app:useSimpleSummaryProvider="true" />
+        <ListPreference
+            app:defaultValue="PaddleOCRv4"
+            app:entries="@array/det_model_entries"
+            app:entryValues="@array/det_model_entries"
+            app:iconSpaceReserved="false"
+            app:key="det_model"
+            app:title="识别"
+            app:useSimpleSummaryProvider="true" />
+    </PreferenceCategory>
+
+
+    <PreferenceCategory
+        app:iconSpaceReserved="false"
+        app:title="检测设置">
+        <SwitchPreferenceCompat
+            app:iconSpaceReserved="false"
+            app:key="det_enabled_state"
+            app:title="启用检测" />
 
         <EditTextPreference
-            app:key="signature"
-            app:title="@string/signature_title"
+            app:dependency="det_enabled_state"
+            app:enabled="false"
+            app:iconSpaceReserved="false"
+            app:key="det_batch_size"
+            app:summary="1"
+            app:title="批次大小" />
+
+        <EditTextPreference
+            app:defaultValue="限制最小边为960"
+            app:dependency="det_enabled_state"
+            app:iconSpaceReserved="false"
+            app:key="det_limit_type"
+            app:title="缩放处理方式"
             app:useSimpleSummaryProvider="true" />
 
-        <ListPreference
-            app:defaultValue="reply"
-            app:entries="@array/reply_entries"
-            app:entryValues="@array/reply_values"
-            app:key="reply"
-            app:title="@string/reply_title"
+        <EditTextPreference
+            app:defaultValue="0.3;0.5;2.0;启用膨胀;slow"
+            app:dependency="det_enabled_state"
+            app:iconSpaceReserved="false"
+            app:key="det_db_mode"
+            app:title="文本框选方式"
             app:useSimpleSummaryProvider="true" />
 
+        <EditTextPreference
+            app:defaultValue="不保存"
+            app:dependency="det_enabled_state"
+            app:enabled="false"
+            app:iconSpaceReserved="false"
+            app:key="det_save_result"
+            app:title="保存检测结果到SD卡"
+            app:useSimpleSummaryProvider="true" />
     </PreferenceCategory>
 
-    <PreferenceCategory app:title="@string/sync_header">
-
+    <PreferenceCategory
+        app:iconSpaceReserved="false"
+        app:title="分类设置">
         <SwitchPreferenceCompat
-            app:key="sync"
-            app:title="@string/sync_title" />
+            app:iconSpaceReserved="false"
+            app:key="cls_enabled_state"
+            app:title="启用分类" />
 
-        <SwitchPreferenceCompat
-            app:dependency="sync"
-            app:key="attachment"
-            app:summaryOff="@string/attachment_summary_off"
-            app:summaryOn="@string/attachment_summary_on"
-            app:title="@string/attachment_title" />
+        <EditTextPreference
+            app:dependency="cls_enabled_state"
+            app:iconSpaceReserved="false"
+            app:key="cls_batch_size"
+            app:summary="1"
+            app:title="批次大小" />
 
+        <EditTextPreference
+            app:dependency="cls_enabled_state"
+            app:iconSpaceReserved="false"
+            app:key="cls_resize_settings"
+            app:summary="48x192"
+            app:title="缩放设置" />
+
+        <EditTextPreference
+            app:defaultValue="0.9"
+            app:dependency="cls_enabled_state"
+            app:iconSpaceReserved="false"
+            app:key="cls_db"
+            app:title="分类阈值"
+            app:useSimpleSummaryProvider="true" />
+
+        <EditTextPreference
+            app:defaultValue="不保存"
+            app:dependency="cls_enabled_state"
+            app:enabled="false"
+            app:iconSpaceReserved="false"
+            app:title="保存分类结果到SD卡"
+            app:useSimpleSummaryProvider="true" />
     </PreferenceCategory>
 
+    <PreferenceCategory
+        app:iconSpaceReserved="false"
+        app:title="识别设置">
+
+        <SwitchPreferenceCompat
+            app:iconSpaceReserved="false"
+            app:key="rec_enabled_state"
+            app:title="启用识别" />
+
+        <EditTextPreference
+            app:dependency="rec_enabled_state"
+            app:iconSpaceReserved="false"
+            app:key="rec_batch_size"
+            app:summary="1"
+            app:title="批次大小" />
+
+        <Preference
+            app:dependency="rec_enabled_state"
+            app:fragment="com.sliver.sample.preference.RecSettingsFragment"
+            app:iconSpaceReserved="false"
+            app:key="rec_resize_settings"
+            app:summary="32x320"
+            app:title="缩放设置" />
+
+        <EditTextPreference
+            app:defaultValue="不保存"
+            app:dependency="rec_enabled_state"
+            app:enabled="false"
+            app:iconSpaceReserved="false"
+            app:key="rec_save_result"
+            app:title="保存识别结果到SD卡"
+            app:useSimpleSummaryProvider="true" />
+    </PreferenceCategory>
 </PreferenceScreen>

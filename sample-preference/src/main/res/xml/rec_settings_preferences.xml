@@ -1,0 +1,25 @@
+<?xml version="1.0" encoding="utf-8"?>
+<androidx.preference.PreferenceScreen xmlns:app="http://schemas.android.com/apk/res-auto">
+    <PreferenceCategory
+        app:iconSpaceReserved="false"
+        app:title="缩放设置">
+        <Preference
+            app:enabled="false"
+            app:iconSpaceReserved="false"
+            app:key="rec_resize_way"
+            app:summary="按批次中最大宽高比缩放，填充宽度"
+            app:title="缩放方式" />
+        <EditTextPreference
+            app:defaultValue="32"
+            app:iconSpaceReserved="false"
+            app:key="rec_resize_height"
+            app:title="缩放高度"
+            app:useSimpleSummaryProvider="true" />
+        <EditTextPreference
+            app:defaultValue="320"
+            app:iconSpaceReserved="false"
+            app:key="rec_resize_width"
+            app:title="缩放宽度"
+            app:useSimpleSummaryProvider="true" />
+    </PreferenceCategory>
+</androidx.preference.PreferenceScreen>
