@@ -134,7 +134,8 @@ public:
     explicit TextRecognizer() {
         Ort::SessionOptions session_options;
         session = std::make_unique<Ort::Session>(
-                env, rec_onnx.data(), rec_onnx.size_bytes(),
+                env, Res::modelsRecRecOnnx.data(),
+                Res::modelsRecRecOnnx.size_bytes(),
                 session_options);
         this->rec_img_h_ = 48;
         this->rec_img_w_ = 320;
@@ -258,7 +259,8 @@ public:
         result.emplace_back("#");
 
         std::istringstream iss;
-        iss.str(std::string(ppocr_keys_v1_txt.data(), ppocr_keys_v1_txt.size_bytes()));
+        iss.str(std::string(Res::modelsRecPpocrKeysV1Txt.data(),
+                            Res::modelsRecPpocrKeysV1Txt.size_bytes()));
         std::string line;
         while (getline(iss, line)) {
             result.push_back(line);
@@ -288,7 +290,8 @@ public:
     explicit TextClassifier() {
         Ort::SessionOptions session_options;
         session = std::make_unique<Ort::Session>(
-                env, cls_onnx.data(), cls_onnx.size_bytes(),
+                env, Res::modelsClsClsOnnx.data(),
+                Res::modelsClsClsOnnx.size_bytes(),
                 session_options);
     }
 
@@ -407,7 +410,8 @@ public:
         // 创建 ONNX Runtime 会话
         Ort::SessionOptions session_options;
         session = std::make_unique<Ort::Session>(
-                env, det_onnx.data(), det_onnx.size_bytes(),
+                env, Res::modelsDetDetOnnx.data(),
+                Res::modelsDetDetOnnx.size_bytes(),
                 session_options);
         this->det_db_box_thresh_ = 0.6;
         this->det_db_unclip_ratio_ = 1.5;
