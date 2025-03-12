@@ -6,8 +6,6 @@
 #include <opencv2/opencv.hpp>
 #include <onnxruntime_cxx_api.h>
 
-#include <rar.hpp>
-
 #include "ImageDecoder.h"
 #include "Shell.h"
 #include "PPOCR.h"
@@ -54,8 +52,6 @@ Java_com_sliver_samples_MainActivity_screenCapture(JNIEnv *env, jobject thiz) {
         logger::error("OpenCV Version: {}", cv::getVersionString());
 
         logger::error("onnxruntime Version: {}", Ort::GetVersionString());
-
-        logger::error("UnRAR Version: {}.{}.{}", RARVER_MAJOR, RARVER_MINOR, RARVER_BETA);
 
         auto startTime = std::chrono::time_point_cast<std::chrono::milliseconds>(
                 std::chrono::system_clock::now()).time_since_epoch().count();
