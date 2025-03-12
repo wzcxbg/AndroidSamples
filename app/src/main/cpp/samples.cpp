@@ -6,10 +6,10 @@
 #include <opencv2/opencv.hpp>
 #include <onnxruntime_cxx_api.h>
 
-#include "ImageDecoder.h"
-#include "Shell.h"
-#include "PPOCR.h"
 #include "simple_logger.h"
+#include "root_shell.h"
+#include "image_decoder.h"
+#include "paddle_ocr.h"
 
 void testOnnx2() {
     cv::Mat img = cv::imread("/sdcard/Download/1.jpg");
@@ -38,7 +38,7 @@ Java_com_sliver_samples_MainActivity_screenCapture(JNIEnv *env, jobject thiz) {
     JavaVM *jvm;
     env->GetJavaVM(&jvm);
     std::thread([=]() {
-        Shell shell;
+        RootShell shell;
         std::string ret1 = shell.execute("screencap -p");
         logger::error("screencap -p: {} {}", ret1.c_str(), ret1.size());
 
