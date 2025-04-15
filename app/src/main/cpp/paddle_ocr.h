@@ -228,14 +228,13 @@ public:
                 float max_value = 0.0f;
 
                 for (int n = 0; n < predict_shape[1]; n++) {
+                    float *row_start = &predict_batch[(m * predict_shape[1] + n) *
+                                                      predict_shape[2]];
+                    float *row_end = row_start + predict_shape[2];
                     // get idx
-                    argmax_idx = int(PaddleOCR::Utility::argmax(
-                            &predict_batch[(m * predict_shape[1] + n) * predict_shape[2]],
-                            &predict_batch[(m * predict_shape[1] + n + 1) * predict_shape[2]]));
+                    argmax_idx = int(PaddleOCR::Utility::argmax(row_start, row_end));
                     // get score
-                    max_value = float(*std::max_element(
-                            &predict_batch[(m * predict_shape[1] + n) * predict_shape[2]],
-                            &predict_batch[(m * predict_shape[1] + n + 1) * predict_shape[2]]));
+                    max_value = *std::max_element(row_start, row_end);
 
                     if (argmax_idx > 0 && (!(n > 0 && argmax_idx == last_index))) {
                         score += max_value;
@@ -364,13 +363,10 @@ public:
 
             // postprocess
             for (int batch_idx = 0; batch_idx < predict_shape[0]; batch_idx++) {
-                int label = int(
-                        PaddleOCR::Utility::argmax(&predict_batch[batch_idx * predict_shape[1]],
-                                                   &predict_batch[(batch_idx + 1) *
-                                                                  predict_shape[1]]));
-                float score = float(*std::max_element(
-                        &predict_batch[batch_idx * predict_shape[1]],
-                        &predict_batch[(batch_idx + 1) * predict_shape[1]]));
+                float *row_start = &predict_batch[batch_idx * predict_shape[1]];
+                float *row_end = row_start + predict_shape[1];
+                int label = int(PaddleOCR::Utility::argmax(row_start, row_end));
+                float score = *std::max_element(row_start, row_end);
                 result[beg_img_no + batch_idx] = {label, score};
             }
         }
