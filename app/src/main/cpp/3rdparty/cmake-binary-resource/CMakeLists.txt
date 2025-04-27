@@ -63,17 +63,19 @@ function(add_binary_target_for_android TARGET_NAME)
     # objcopy -I binary -O elf64-aarch64 -B aarch64 sample.jpg sample.o
     # ld -shared -o libexample.so example.o
     # ar -rcs libsample.a sample.o
+
+    set(TARGET_HEADER_FILE "${TARGET_NAME}.h")  # 生成的头文件名，如Res.h
+    set(TARGET_NAMESPACE ${TARGET_NAME})        # 生成的命名空间，可为空
+    set(TARGET_CONTAINER "vector")              # 生成变量的目标容器，可选项：vector、span
+    set(TARGET_VAR_BASE_DIR "")                 # 生成符号的相对路径，必须是绝对路径
+
     if (NOT CMAKE_CXX_COMPILER OR NOT CMAKE_OBJCOPY OR NOT CMAKE_LINKER OR NOT CMAKE_AR)
         message(FATAL_ERROR "Toolchain not support!")
     endif ()
-    set(TARGET_CONTAINER "vector")  # 生成变量的目标容器，可选项：vector、span
-    set(TARGET_VAR_BASE_DIR "")    # 生成符号的相对路径，必须是绝对路径
 
-    set(RES_NAMESPACE "Res")
-    set(RES_FILENAME "${TARGET_NAME}")
     set(OUTPUT_FILE_DIR ${CMAKE_CURRENT_BINARY_DIR}/CMakeFiles/${TARGET_NAME}.dir)
     set(RES_H_FILE_DIR "${OUTPUT_FILE_DIR}/include")
-    set(RES_H_FILE_PATH "${OUTPUT_FILE_DIR}/include/${TARGET_NAME}.h")
+    set(RES_H_FILE_PATH "${OUTPUT_FILE_DIR}/include/${TARGET_HEADER_FILE}")
     set(RES_CPP_FILE_PATH "${OUTPUT_FILE_DIR}/${TARGET_NAME}.cpp")
     set(RES_OBJ_FILE_PATH "${OUTPUT_FILE_DIR}/${TARGET_NAME}.o")
     set(RES_LIB_FILE_PATH "${OUTPUT_FILE_DIR}/${TARGET_NAME}.a")
@@ -120,7 +122,7 @@ function(add_binary_target_for_android TARGET_NAME)
     # 生成头文件
     set(RES_H_FILE_CONTENT "#pragma once\n\n")
     string(APPEND RES_H_FILE_CONTENT "#include <${TARGET_CONTAINER}>\n\n")
-    string(APPEND RES_H_FILE_CONTENT "namespace Res {\n")
+    string(APPEND RES_H_FILE_CONTENT "namespace ${TARGET_NAMESPACE} {\n")
     foreach (BINARY_FILE ${ARGN})
         set(BINARY_FILE_VAR_ID_REF_FILE ${BINARY_FILE})
         if (NOT ${TARGET_VAR_BASE_DIR} STREQUAL "")
@@ -135,7 +137,7 @@ function(add_binary_target_for_android TARGET_NAME)
     file(WRITE ${RES_H_FILE_PATH} ${RES_H_FILE_CONTENT})
 
     # 生成源文件
-    set(RES_CPP_FILE_CONTENT "#include \"${RES_FILENAME}.h\"\n\n")
+    set(RES_CPP_FILE_CONTENT "#include \"${TARGET_HEADER_FILE}\"\n\n")
     foreach (BINARY_FILE ${ARGN})
         get_filename_component(BINARY_FILE_NAME ${BINARY_FILE} NAME)
         string(REGEX REPLACE "[/\\.]" "_" BINARY_SYMBOL ${BINARY_FILE_NAME})
@@ -147,7 +149,7 @@ function(add_binary_target_for_android TARGET_NAME)
         string(APPEND RES_CPP_FILE_CONTENT "extern char ${SYMBOL_SIZE}\;\n")
         string(APPEND RES_CPP_FILE_CONTENT "\n")
     endforeach ()
-    string(APPEND RES_CPP_FILE_CONTENT "namespace Res {\n")
+    string(APPEND RES_CPP_FILE_CONTENT "namespace ${TARGET_NAMESPACE} {\n")
     foreach (BINARY_FILE ${ARGN})
         get_filename_component(BINARY_FILE_NAME ${BINARY_FILE} NAME)
         string(REGEX REPLACE "[/\\.]" "_" BINARY_SYMBOL ${BINARY_FILE_NAME})
