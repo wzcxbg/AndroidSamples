@@ -57,17 +57,23 @@ function(convert_path OUTPUT_VAR INPUT_PATH NAMING EXCLUDE_EXT)
 endfunction()
 
 
-function(add_binary_target_for_android TARGET_NAME)
-    # 存在的问题: 只支持arm64-v8a，头文件命名、命名空间命名、头文件生成方式（嵌套、单命名空间）
+function(_add_binary_target_for_android_impl)
+    # 存在的问题: 只支持arm64-v8a，不支持添加文件夹，缺少嵌套的头文件定义选项
     # 将二进制文件编译成库文件
     # objcopy -I binary -O elf64-aarch64 -B aarch64 sample.jpg sample.o
     # ld -shared -o libexample.so example.o
     # ar -rcs libsample.a sample.o
 
-    set(TARGET_HEADER_FILE "${TARGET_NAME}.h")  # 生成的头文件名，如Res.h
-    set(TARGET_NAMESPACE ${TARGET_NAME})        # 生成的命名空间，可为空
-    set(TARGET_CONTAINER "vector")              # 生成变量的目标容器，可选项：vector、span
-    set(TARGET_VAR_BASE_DIR "")                 # 生成符号的相对路径，必须是绝对路径
+    set(TARGET_NAME         ${ARGV0})   # 生成的目标名，必填项
+    set(TARGET_HEADER_FILE  ${ARGV1})   # 生成的头文件名，如Res.h
+    set(TARGET_NAMESPACE    ${ARGV2})   # 生成的命名空间，可为空
+    set(TARGET_CONTAINER    ${ARGV3})   # 生成变量的目标容器，可选项：vector、span
+    set(TARGET_VAR_BASE_DIR ${ARGV4})   # 生成符号的相对路径，必须是绝对路径
+    set(TARGET_BINARY_FILES "")         # 要编译进目标的二进制文件，必填项
+    math(EXPR _arg_count "${ARGC} - 1")
+    foreach(idx RANGE 5 ${_arg_count})
+        list(APPEND TARGET_BINARY_FILES "${ARGV${idx}}")
+    endforeach()
 
     if (NOT CMAKE_CXX_COMPILER OR NOT CMAKE_OBJCOPY OR NOT CMAKE_LINKER OR NOT CMAKE_AR)
         message(FATAL_ERROR "Toolchain not support!")
@@ -100,7 +106,7 @@ function(add_binary_target_for_android TARGET_NAME)
 
     # 二进制文件生成OBJ
     set(OBJECT_FILE_PATHS)
-    foreach (BINARY_FILE ${ARGN})
+    foreach (BINARY_FILE ${TARGET_BINARY_FILES})
         get_filename_component(INPUT_FILE ${BINARY_FILE} ABSOLUTE)
         get_filename_component(INPUT_FILE_NAME ${BINARY_FILE} NAME)
         get_filename_component(INPUT_FILE_NAME_WE ${BINARY_FILE} NAME_WE)
@@ -123,7 +129,7 @@ function(add_binary_target_for_android TARGET_NAME)
     set(RES_H_FILE_CONTENT "#pragma once\n\n")
     string(APPEND RES_H_FILE_CONTENT "#include <${TARGET_CONTAINER}>\n\n")
     string(APPEND RES_H_FILE_CONTENT "namespace ${TARGET_NAMESPACE} {\n")
-    foreach (BINARY_FILE ${ARGN})
+    foreach (BINARY_FILE ${TARGET_BINARY_FILES})
         set(BINARY_FILE_VAR_ID_REF_FILE ${BINARY_FILE})
         if (NOT ${TARGET_VAR_BASE_DIR} STREQUAL "")
             get_filename_component(INPUT_FILE ${BINARY_FILE} ABSOLUTE)
@@ -138,7 +144,7 @@ function(add_binary_target_for_android TARGET_NAME)
 
     # 生成源文件
     set(RES_CPP_FILE_CONTENT "#include \"${TARGET_HEADER_FILE}\"\n\n")
-    foreach (BINARY_FILE ${ARGN})
+    foreach (BINARY_FILE ${TARGET_BINARY_FILES})
         get_filename_component(BINARY_FILE_NAME ${BINARY_FILE} NAME)
         string(REGEX REPLACE "[/\\.]" "_" BINARY_SYMBOL ${BINARY_FILE_NAME})
         set(SYMBOL_START "_binary_${BINARY_SYMBOL}_start")
@@ -150,7 +156,7 @@ function(add_binary_target_for_android TARGET_NAME)
         string(APPEND RES_CPP_FILE_CONTENT "\n")
     endforeach ()
     string(APPEND RES_CPP_FILE_CONTENT "namespace ${TARGET_NAMESPACE} {\n")
-    foreach (BINARY_FILE ${ARGN})
+    foreach (BINARY_FILE ${TARGET_BINARY_FILES})
         get_filename_component(BINARY_FILE_NAME ${BINARY_FILE} NAME)
         string(REGEX REPLACE "[/\\.]" "_" BINARY_SYMBOL ${BINARY_FILE_NAME})
         set(SYMBOL_START "_binary_${BINARY_SYMBOL}_start")
@@ -188,6 +194,42 @@ function(add_binary_target_for_android TARGET_NAME)
     target_include_directories(${TARGET_NAME} INTERFACE ${RES_H_FILE_DIR})
     set_target_properties(${TARGET_NAME} PROPERTIES LINKER_LANGUAGE CXX)
     set_target_properties(${TARGET_NAME} PROPERTIES IMPORTED_LOCATION ${RES_LIB_FILE_PATH})
+endfunction()
+
+
+function(add_binary_target_for_android)
+    set(options "")
+    set(oneValueArgs TARGET_NAME TARGET_HEADER_FILE TARGET_NAMESPACE TARGET_CONTAINER TARGET_VAR_BASE_DIR)
+    set(multiValueArgs TARGET_BINARY_FILES)
+    cmake_parse_arguments(local "${options}" "${oneValueArgs}" "${multiValueArgs}" ${ARGN})
+
+    if (NOT DEFINED local_TARGET_NAME)
+        message(FATAL_ERROR "Error: TARGET_NAME argument cannot be empty.")
+    endif ()
+    if (NOT DEFINED local_TARGET_BINARY_FILES OR NOT local_TARGET_BINARY_FILES)
+        message(FATAL_ERROR "Error: TARGET_BINARY_FILES argument required and cannot be empty.")
+    endif ()
+
+    if (NOT DEFINED local_TARGET_HEADER_FILE)
+        set(local_TARGET_HEADER_FILE "${local_TARGET_NAME}.h")
+    endif ()
+    if (NOT DEFINED local_TARGET_NAMESPACE)
+        set(local_TARGET_NAMESPACE ${local_TARGET_NAME})
+    endif ()
+    if (NOT DEFINED local_TARGET_CONTAINER)
+        set(local_TARGET_CONTAINER "vector")
+    endif ()
+    if (NOT DEFINED local_TARGET_VAR_BASE_DIR)
+        set(local_TARGET_VAR_BASE_DIR "")
+    endif ()
+
+    _add_binary_target_for_android_impl(
+            "${local_TARGET_NAME}"
+            "${local_TARGET_HEADER_FILE}"
+            "${local_TARGET_NAMESPACE}"
+            "${local_TARGET_CONTAINER}"
+            "${local_TARGET_VAR_BASE_DIR}"
+            "${local_TARGET_BINARY_FILES}")
 endfunction()
 
 

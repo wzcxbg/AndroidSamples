@@ -17,9 +17,11 @@ add_subdirectory(3rdparty/paddleocr_cpp_infer)
 target_link_libraries(${CMAKE_PROJECT_NAME} paddleocr_cpp_infer)
 
 add_subdirectory(3rdparty/cmake-binary-resource)
-add_binary_target(models
-        models/det/det.onnx
-        models/cls/cls.onnx
-        models/rec/rec.onnx
-        models/rec/ppocr_keys_v1.txt)
+add_binary_target_for_android(
+        TARGET_NAME         models
+        TARGET_NAMESPACE    Res
+        TARGET_BINARY_FILES models/det/det.onnx
+                            models/cls/cls.onnx
+                            models/rec/rec.onnx
+                            models/rec/ppocr_keys_v1.txt)
 target_link_libraries(${CMAKE_PROJECT_NAME} models)
