@@ -58,7 +58,7 @@ endfunction()
 
 
 function(add_binary_target_for_android TARGET_NAME)
-    # 存在的问题: 只支持arm64-v8a，未支持目录，未支持设置相对路径，头文件命名、命名空间命名、头文件生成方式（嵌套、单命名空间）
+    # 存在的问题: 只支持arm64-v8a，头文件命名、命名空间命名、头文件生成方式（嵌套、单命名空间）
     # 将二进制文件编译成库文件
     # objcopy -I binary -O elf64-aarch64 -B aarch64 sample.jpg sample.o
     # ld -shared -o libexample.so example.o
@@ -66,7 +66,8 @@ function(add_binary_target_for_android TARGET_NAME)
     if (NOT CMAKE_CXX_COMPILER OR NOT CMAKE_OBJCOPY OR NOT CMAKE_LINKER OR NOT CMAKE_AR)
         message(FATAL_ERROR "Toolchain not support!")
     endif ()
-    set(TARGET_CONTAINER "vector") # 生成变量的目标容器，可选项：vector、span
+    set(TARGET_CONTAINER "vector")  # 生成变量的目标容器，可选项：vector、span
+    set(TARGET_VAR_BASE_DIR "")    # 生成符号的相对路径，必须是绝对路径
 
     set(RES_NAMESPACE "Res")
     set(RES_FILENAME "${TARGET_NAME}")
@@ -93,6 +94,7 @@ function(add_binary_target_for_android TARGET_NAME)
         set_target_properties(${TARGET_NAME} PROPERTIES IMPORTED_LOCATION ${RES_LIB_FILE_PATH})
         return()
     endif ()
+    FILE(REMOVE_RECURSE ${OUTPUT_FILE_DIR})
 
     # 二进制文件生成OBJ
     set(OBJECT_FILE_PATHS)
@@ -120,7 +122,13 @@ function(add_binary_target_for_android TARGET_NAME)
     string(APPEND RES_H_FILE_CONTENT "#include <${TARGET_CONTAINER}>\n\n")
     string(APPEND RES_H_FILE_CONTENT "namespace Res {\n")
     foreach (BINARY_FILE ${ARGN})
-        convert_path(BINARY_FILE_VAR_ID "${BINARY_FILE}" "lowerCamelCase" "FALSE")
+        set(BINARY_FILE_VAR_ID_REF_FILE ${BINARY_FILE})
+        if (NOT ${TARGET_VAR_BASE_DIR} STREQUAL "")
+            get_filename_component(INPUT_FILE ${BINARY_FILE} ABSOLUTE)
+            file(RELATIVE_PATH BINARY_FILE_VAR_ID_REF_FILE "${TARGET_VAR_BASE_DIR}" "${INPUT_FILE}")
+        endif ()
+
+        convert_path(BINARY_FILE_VAR_ID "${BINARY_FILE_VAR_ID_REF_FILE}" "lowerCamelCase" "FALSE")
         string(APPEND RES_H_FILE_CONTENT "    extern std::${TARGET_CONTAINER}<char> ${BINARY_FILE_VAR_ID}\;\n")
     endforeach ()
     string(APPEND RES_H_FILE_CONTENT "}\n")
@@ -146,7 +154,14 @@ function(add_binary_target_for_android TARGET_NAME)
         set(SYMBOL_START "_binary_${BINARY_SYMBOL}_start")
         set(SYMBOL_END "_binary_${BINARY_SYMBOL}_end")
         set(SYMBOL_SIZE "_binary_${BINARY_SYMBOL}_size")
-        convert_path(BINARY_FILE_VAR_ID "${BINARY_FILE}" "lowerCamelCase" "FALSE")
+
+        set(BINARY_FILE_VAR_ID_REF_FILE ${BINARY_FILE})
+        if (NOT ${TARGET_VAR_BASE_DIR} STREQUAL "")
+            get_filename_component(INPUT_FILE ${BINARY_FILE} ABSOLUTE)
+            file(RELATIVE_PATH BINARY_FILE_VAR_ID_REF_FILE "${TARGET_VAR_BASE_DIR}" "${INPUT_FILE}")
+        endif ()
+
+        convert_path(BINARY_FILE_VAR_ID "${BINARY_FILE_VAR_ID_REF_FILE}" "lowerCamelCase" "FALSE")
         string(APPEND RES_CPP_FILE_CONTENT "    std::${TARGET_CONTAINER}<char> ${BINARY_FILE_VAR_ID}(&${SYMBOL_START}, &${SYMBOL_END})\;\n")
     endforeach ()
     string(APPEND RES_CPP_FILE_CONTENT "}\n")
