@@ -77,7 +77,7 @@ namespace Utility {
     }
 
     template<class T>
-    long compare_same_count(std::span<T> data1, std::span<T> data2) {
+    long compare_same_count(std::vector<T> data1, std::vector<T> data2) {
         int same_count = 0;
         for (int i = 0; i < std::min(data1.size(), data2.size()); ++i) {
             if (data1[i] == data2[i]) {
@@ -135,7 +135,7 @@ public:
         Ort::SessionOptions session_options;
         session = std::make_unique<Ort::Session>(
                 env, Res::modelsRecRecOnnx.data(),
-                Res::modelsRecRecOnnx.size_bytes(),
+                Res::modelsRecRecOnnx.size(),
                 session_options);
         this->rec_img_h_ = 48;
         this->rec_img_w_ = 320;
@@ -259,7 +259,7 @@ public:
 
         std::istringstream iss;
         iss.str(std::string(Res::modelsRecPpocrKeysV1Txt.data(),
-                            Res::modelsRecPpocrKeysV1Txt.size_bytes()));
+                            Res::modelsRecPpocrKeysV1Txt.size()));
         std::string line;
         while (getline(iss, line)) {
             result.push_back(line);
@@ -290,7 +290,7 @@ public:
         Ort::SessionOptions session_options;
         session = std::make_unique<Ort::Session>(
                 env, Res::modelsClsClsOnnx.data(),
-                Res::modelsClsClsOnnx.size_bytes(),
+                Res::modelsClsClsOnnx.size(),
                 session_options);
     }
 
@@ -407,7 +407,7 @@ public:
         Ort::SessionOptions session_options;
         session = std::make_unique<Ort::Session>(
                 env, Res::modelsDetDetOnnx.data(),
-                Res::modelsDetDetOnnx.size_bytes(),
+                Res::modelsDetDetOnnx.size(),
                 session_options);
         this->det_db_box_thresh_ = 0.6;
         this->det_db_unclip_ratio_ = 1.5;

@@ -58,7 +58,7 @@ endfunction()
 
 
 function(add_binary_target_for_android TARGET_NAME)
-    # 存在的问题: 只支持arm64-v8a，只支持C++20
+    # 存在的问题: 只支持arm64-v8a，未支持目录，未支持设置相对路径，头文件命名、命名空间命名、头文件生成方式（嵌套、单命名空间）
     # 将二进制文件编译成库文件
     # objcopy -I binary -O elf64-aarch64 -B aarch64 sample.jpg sample.o
     # ld -shared -o libexample.so example.o
@@ -66,6 +66,8 @@ function(add_binary_target_for_android TARGET_NAME)
     if (NOT CMAKE_CXX_COMPILER OR NOT CMAKE_OBJCOPY OR NOT CMAKE_LINKER OR NOT CMAKE_AR)
         message(FATAL_ERROR "Toolchain not support!")
     endif ()
+    set(TARGET_CONTAINER "vector") # 生成变量的目标容器，可选项：vector、span
+
     set(RES_NAMESPACE "Res")
     set(RES_FILENAME "${TARGET_NAME}")
     set(OUTPUT_FILE_DIR ${CMAKE_CURRENT_BINARY_DIR}/CMakeFiles/${TARGET_NAME}.dir)
@@ -115,11 +117,11 @@ function(add_binary_target_for_android TARGET_NAME)
 
     # 生成头文件
     set(RES_H_FILE_CONTENT "#pragma once\n\n")
-    string(APPEND RES_H_FILE_CONTENT "#include <span>\n\n")
+    string(APPEND RES_H_FILE_CONTENT "#include <${TARGET_CONTAINER}>\n\n")
     string(APPEND RES_H_FILE_CONTENT "namespace Res {\n")
     foreach (BINARY_FILE ${ARGN})
         convert_path(BINARY_FILE_VAR_ID "${BINARY_FILE}" "lowerCamelCase" "FALSE")
-        string(APPEND RES_H_FILE_CONTENT "    extern std::span<char> ${BINARY_FILE_VAR_ID}\;\n")
+        string(APPEND RES_H_FILE_CONTENT "    extern std::${TARGET_CONTAINER}<char> ${BINARY_FILE_VAR_ID}\;\n")
     endforeach ()
     string(APPEND RES_H_FILE_CONTENT "}\n")
     file(WRITE ${RES_H_FILE_PATH} ${RES_H_FILE_CONTENT})
@@ -145,7 +147,7 @@ function(add_binary_target_for_android TARGET_NAME)
         set(SYMBOL_END "_binary_${BINARY_SYMBOL}_end")
         set(SYMBOL_SIZE "_binary_${BINARY_SYMBOL}_size")
         convert_path(BINARY_FILE_VAR_ID "${BINARY_FILE}" "lowerCamelCase" "FALSE")
-        string(APPEND RES_CPP_FILE_CONTENT "    std::span<char> ${BINARY_FILE_VAR_ID}(&${SYMBOL_START}, &${SYMBOL_END})\;\n")
+        string(APPEND RES_CPP_FILE_CONTENT "    std::${TARGET_CONTAINER}<char> ${BINARY_FILE_VAR_ID}(&${SYMBOL_START}, &${SYMBOL_END})\;\n")
     endforeach ()
     string(APPEND RES_CPP_FILE_CONTENT "}\n")
     file(WRITE ${RES_CPP_FILE_PATH} ${RES_CPP_FILE_CONTENT})
