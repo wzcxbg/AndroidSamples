@@ -1,8 +1,11 @@
 #pragma once
 
+#include <span>
+#include <numeric>
+#include <algorithm>
+
 #include <opencv2/opencv.hpp>
 #include <onnxruntime_cxx_api.h>
-#include <algorithm>
 
 #include "include/postprocess_op.h"
 #include "include/preprocess_op.h"
@@ -67,7 +70,7 @@ namespace Utility {
         }
         std::vector<int> dims = {3, tar_h, tar_w};
         cv::Mat result(int(dims.size()), dims.data(), CV_32FC1);
-        u_long channelBytes = tar_h * tar_w * result.elemSize();
+        long long channelBytes = tar_h * tar_w * result.elemSize();
         for (int i = 0; i < 3; ++i) {
             cv::Mat resultCh(tar_h, tar_w, CV_32FC1, result.data + channelBytes * i);
             channels[i].convertTo(channels[i], CV_32FC1, alpha[i], +beta[i]);
@@ -77,7 +80,7 @@ namespace Utility {
     }
 
     template<class T>
-    long compare_same_count(std::vector<T> data1, std::vector<T> data2) {
+    long compare_same_count(std::span<T> data1, std::span<T> data2) {
         int same_count = 0;
         for (int i = 0; i < std::min(data1.size(), data2.size()); ++i) {
             if (data1[i] == data2[i]) {
@@ -153,7 +156,7 @@ public:
         for (int i = 0; i < img_num; i++) {
             width_list.push_back(float(img_list[i].cols) / img_list[i].rows);
         }
-        std::vector<int> indices = PaddleOCR::Utility::argsort(width_list);
+        std::vector<size_t> indices = PaddleOCR::Utility::argsort(width_list);
 
         for (int beg_img_no = 0; beg_img_no < img_num;
              beg_img_no += this->rec_batch_num_) {
@@ -179,7 +182,7 @@ public:
                 cv::Mat resize_img;
                 this->resize_op_.Run(srcimg, resize_img, max_wh_ratio,
                                      false, this->rec_image_shape_);
-                this->normalize_op_.Run(&resize_img, this->mean_, this->scale_,
+                this->normalize_op_.Run(resize_img, this->mean_, this->scale_,
                                         this->is_scale_);
                 norm_img_batch.push_back(resize_img);
                 batch_width = std::max(resize_img.cols, batch_width);
@@ -258,8 +261,8 @@ public:
         result.emplace_back("#");
 
         std::istringstream iss;
-        iss.str(std::string(Res::modelsRecPpocrKeysV1Txt.data(),
-                            Res::modelsRecPpocrKeysV1Txt.size()));
+        iss.str(std::string(Res::modelsRecPpocrKeysV1Txt.begin(),
+                            Res::modelsRecPpocrKeysV1Txt.end()));
         std::string line;
         while (getline(iss, line)) {
             result.push_back(line);
@@ -316,7 +319,7 @@ public:
                 this->resize_op_.Run(srcimg, resize_img, false,
                                      cls_image_shape);
 
-                this->normalize_op_.Run(&resize_img, this->mean_, this->scale_,
+                this->normalize_op_.Run(resize_img, this->mean_, this->scale_,
                                         this->is_scale_);
                 if (resize_img.cols < cls_image_shape[2]) {
                     cv::copyMakeBorder(resize_img, resize_img, 0, 0, 0,
@@ -426,10 +429,10 @@ public:
         // pre-process
         this->resize_op_.Run(img, resize_img, limit_type_,
                              limit_side_len_, ratio_h, ratio_w, false);
-        this->normalize_op_.Run(&resize_img, mean_, scale_,
+        this->normalize_op_.Run(resize_img, mean_, scale_,
                                 is_scale_);
         std::vector<float> input(1 * 3 * resize_img.rows * resize_img.cols, 0.0f);
-        this->permute_op_.Run(&resize_img, input.data());
+        this->permute_op_.Run(resize_img, input.data());
 
 
         // inference.
@@ -489,7 +492,7 @@ public:
                 pred_map, bit_map, det_db_box_thresh_, det_db_unclip_ratio_,
                 det_db_score_mode_);
 
-        boxes = post_processor_.FilterTagDetRes(boxes, ratio_h, ratio_w, srcimg);
+        post_processor_.FilterTagDetRes(boxes, ratio_h, ratio_w, srcimg);
 
         std::vector<DetectResult> results;
         results.reserve(boxes.size());

@@ -13,15 +13,42 @@ set(onnxruntime_DIR ${CMAKE_CURRENT_SOURCE_DIR}/3rdparty/onnxruntime/lib/cmake/o
 find_package(onnxruntime REQUIRED)
 target_link_libraries(${CMAKE_PROJECT_NAME} onnxruntime::onnxruntime)
 
-add_subdirectory(3rdparty/paddleocr_cpp_infer)
-target_link_libraries(${CMAKE_PROJECT_NAME} paddleocr_cpp_infer)
 
-add_subdirectory(3rdparty/cmake-binary-resource)
-add_binary_target_for_android(
+include(FetchContent)
+FetchContent_Populate(
+        paddleocr_cpp_infer
+        GIT_REPOSITORY "https://github.com/PaddlePaddle/PaddleOCR"
+        GIT_TAG v2.10.0
+        GIT_SHALLOW TRUE
+        SOURCE_DIR ${paddleocr_cpp_infer_SOURCE_DIR})
+add_library(paddleocr_cpp_infer STATIC
+        ${paddleocr_cpp_infer_SOURCE_DIR}/deploy/cpp_infer/include/postprocess_op.h
+        ${paddleocr_cpp_infer_SOURCE_DIR}/deploy/cpp_infer/include/preprocess_op.h
+        ${paddleocr_cpp_infer_SOURCE_DIR}/deploy/cpp_infer/include/clipper.h
+        ${paddleocr_cpp_infer_SOURCE_DIR}/deploy/cpp_infer/include/utility.h
+        ${paddleocr_cpp_infer_SOURCE_DIR}/deploy/cpp_infer/src/postprocess_op.cpp
+        ${paddleocr_cpp_infer_SOURCE_DIR}/deploy/cpp_infer/src/preprocess_op.cpp
+        ${paddleocr_cpp_infer_SOURCE_DIR}/deploy/cpp_infer/src/clipper.cpp
+        ${paddleocr_cpp_infer_SOURCE_DIR}/deploy/cpp_infer/src/utility.cpp)
+target_include_directories(paddleocr_cpp_infer PUBLIC
+        ${paddleocr_cpp_infer_SOURCE_DIR}/deploy/cpp_infer)
+target_link_libraries(paddleocr_cpp_infer PUBLIC ${OpenCV_LIBS})
+
+
+FetchContent_Populate(
+        cmake-binary-resource
+        GIT_REPOSITORY "https://github.com/wzcxbg/cmake-binary-resource"
+        GIT_TAG main
+        GIT_SHALLOW TRUE
+        SOURCE_DIR ${cmake-binary-resource_SOURCE_DIR})
+include(${cmake-binary-resource_SOURCE_DIR}/CMakeLists.txt)
+add_binary_target(
         TARGET_NAME         models
         TARGET_NAMESPACE    Res
         TARGET_BINARY_FILES models/det/det.onnx
                             models/cls/cls.onnx
                             models/rec/rec.onnx
                             models/rec/ppocr_keys_v1.txt)
-target_link_libraries(${CMAKE_PROJECT_NAME} models)
+
+
+target_link_libraries(${CMAKE_PROJECT_NAME} models paddleocr_cpp_infer)
