@@ -1,0 +1,63 @@
+message(STATUS "LIBRARY_NAME:           ${LIBRARY_NAME}")           # 库名称
+message(STATUS "LIBRARY_SOURCE_DIR:     ${LIBRARY_SOURCE_DIR}")     # 源码目录
+message(STATUS "LIBRARY_BUILD_DIR:      ${LIBRARY_BUILD_DIR}")      # 构建目录
+message(STATUS "LIBRARY_INSTALL_DIR:    ${LIBRARY_INSTALL_DIR}")    # 安装目录
+message(STATUS "LIBRARY_BUILD_TYPE:     ${LIBRARY_BUILD_TYPE}")     # 编译类型
+message(STATUS "LIBRARY_BUILD_SHARED:   ${LIBRARY_BUILD_SHARED}")   # 是否编译动态库
+message(STATUS "CMAKE_SYSTEM_NAME:      ${CMAKE_SYSTEM_NAME}")      # 平台名
+message(STATUS "CMAKE_SYSTEM_PROCESSOR: ${CMAKE_SYSTEM_PROCESSOR}") # 架构名
+
+if (LIBRARY_BUILD_TYPE STREQUAL "Debug" AND LIBRARY_BUILD_SHARED)
+    set(MSVC_RUNTIME_LIBRARY_VALUE "MultiThreadedDebugDLL")
+elseif (LIBRARY_BUILD_TYPE STREQUAL "Debug" AND NOT LIBRARY_BUILD_SHARED)
+    set(MSVC_RUNTIME_LIBRARY_VALUE "MultiThreadedDebug")
+elseif (LIBRARY_BUILD_TYPE STREQUAL "Release" AND LIBRARY_BUILD_SHARED)
+    set(MSVC_RUNTIME_LIBRARY_VALUE "MultiThreadedDLL")
+elseif (LIBRARY_BUILD_TYPE STREQUAL "Release" AND LIBRARY_BUILD_SHARED)
+    set(MSVC_RUNTIME_LIBRARY_VALUE "MultiThreaded")
+endif ()
+message(STATUS "MSVC_RUNTIME_LIBRARY:   ${MSVC_RUNTIME_LIBRARY_VALUE}") # MSVC运行时库
+# 有如下三种方式设置目标的运行库，以保持不同库使用的MSVC运行时库能够统一
+# set(CMAKE_MSVC_RUNTIME_LIBRARY MultiThreadedDebugDLL)
+# set_property(TARGET AutoGaming PROPERTY MSVC_RUNTIME_LIBRARY MultiThreadedDebugDLL)
+# set_target_properties(AutoGaming PROPERTIES MSVC_RUNTIME_LIBRARY MultiThreadedDebugDLL)
+
+if (LIBRARY_BUILD_SHARED)
+    set(BUILD_WITH_STATIC_CRT_VALUE OFF)
+else ()
+    set(BUILD_WITH_STATIC_CRT_VALUE ON)
+endif ()
+
+MESSAGE(STATUS "Configuring ${LIBRARY_NAME}...")
+EXECUTE_PROCESS(
+        COMMAND ${CMAKE_COMMAND}
+        -S ${LIBRARY_SOURCE_DIR}
+        -B ${LIBRARY_BUILD_DIR}
+        -DCMAKE_INSTALL_PREFIX=${LIBRARY_INSTALL_DIR}
+        -DCMAKE_BUILD_TYPE=${LIBRARY_BUILD_TYPE}
+        -DBUILD_EXAMPLES=OFF
+        -DBUILD_TESTS=OFF
+        -DBUILD_PERF_TESTS=OFF
+        -DBUILD_JAVA=OFF
+        -DBUILD_SHARED_LIBS=${LIBRARY_BUILD_SHARED}
+        -DBUILD_WITH_STATIC_CRT=${BUILD_WITH_STATIC_CRT_VALUE}
+        -DBUILD_opencv_world=OFF
+        -DBUILD_opencv_java=OFF
+        -DBUILD_opencv_java_bindings_generator=OFF
+        -DBUILD_opencv_js=OFF
+        -DBUILD_opencv_js_bindings_generator=OFF
+        -DBUILD_opencv_objc_bindings_generator=OFF
+        -DBUILD_opencv_python_bindings_generator=OFF
+        -DBUILD_opencv_python_tests=OFF
+        COMMAND_ERROR_IS_FATAL ANY
+)
+MESSAGE(STATUS "Building ${LIBRARY_NAME}...")
+EXECUTE_PROCESS(
+        COMMAND ${CMAKE_COMMAND} --build ${LIBRARY_BUILD_DIR} --config ${LIBRARY_BUILD_TYPE}
+        COMMAND_ERROR_IS_FATAL ANY
+)
+MESSAGE(STATUS "Installing ${LIBRARY_NAME}...")
+EXECUTE_PROCESS(
+        COMMAND ${CMAKE_COMMAND} --install ${LIBRARY_BUILD_DIR} --config ${LIBRARY_BUILD_TYPE}
+        COMMAND_ERROR_IS_FATAL ANY
+)
