@@ -9,17 +9,23 @@ build_package(
         BUILD_TYPE Release
         BUILD_SHARED ON
 )
+build_package(
+        NAME OpenCV
+        URL https://github.com/opencv/opencv/archive/refs/tags/4.12.0.zip
+        BUILD_SCRIPT ${CMAKE_CURRENT_SOURCE_DIR}/cmake/BuildOpenCV.cmake
+        BUILD_TYPE Debug
+        BUILD_SHARED ON
+)
 add_library(${CMAKE_PROJECT_NAME} SHARED samples.cpp)
 target_link_libraries(${CMAKE_PROJECT_NAME} android log)
 target_compile_features(${CMAKE_PROJECT_NAME} PRIVATE cxx_std_20)
 
-set(OpenCV_DIR ${CMAKE_CURRENT_SOURCE_DIR}/3rdparty/OpenCV)
-find_package(OpenCV REQUIRED imgproc imgcodecs)
+set(OpenCV_DIR ${OpenCV_ROOT}/sdk/native/jni)
+find_package(OpenCV COMPONENTS imgproc imgcodecs REQUIRED)
 target_link_libraries(${CMAKE_PROJECT_NAME} ${OpenCV_LIBS})
 
 find_package(onnxruntime NO_CMAKE_FIND_ROOT_PATH REQUIRED)
 target_link_libraries(${CMAKE_PROJECT_NAME} onnxruntime::onnxruntime)
-
 
 include(FetchContent)
 FetchContent_Populate(

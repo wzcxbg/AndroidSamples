@@ -22,35 +22,71 @@ message(STATUS "MSVC_RUNTIME_LIBRARY:   ${MSVC_RUNTIME_LIBRARY_VALUE}") # MSVCè¿
 # set_property(TARGET AutoGaming PROPERTY MSVC_RUNTIME_LIBRARY MultiThreadedDebugDLL)
 # set_target_properties(AutoGaming PROPERTIES MSVC_RUNTIME_LIBRARY MultiThreadedDebugDLL)
 
-if (LIBRARY_BUILD_SHARED)
-    set(BUILD_WITH_STATIC_CRT_VALUE OFF)
-else ()
-    set(BUILD_WITH_STATIC_CRT_VALUE ON)
+message(STATUS "CMAKE_SYSTEM_NAME:              ${CMAKE_SYSTEM_NAME}")
+message(STATUS "CMAKE_EXPORT_COMPILE_COMMANDS:  ${CMAKE_EXPORT_COMPILE_COMMANDS}")
+message(STATUS "CMAKE_SYSTEM_VERSION:           ${CMAKE_SYSTEM_VERSION}")
+message(STATUS "ANDROID_PLATFORM:               ${ANDROID_PLATFORM}")
+message(STATUS "ANDROID_ABI:                    ${ANDROID_ABI}")
+message(STATUS "CMAKE_ANDROID_ARCH_ABI:         ${CMAKE_ANDROID_ARCH_ABI}")
+message(STATUS "ANDROID_NDK:                    ${ANDROID_NDK}")
+message(STATUS "CMAKE_ANDROID_NDK:              ${CMAKE_ANDROID_NDK}")
+message(STATUS "CMAKE_TOOLCHAIN_FILE:           ${CMAKE_TOOLCHAIN_FILE}")
+message(STATUS "CMAKE_MAKE_PROGRAM:             ${CMAKE_MAKE_PROGRAM}")
+message(STATUS "CMAKE_BUILD_TYPE:               ${CMAKE_BUILD_TYPE}")
+
+if (CMAKE_HOST_SYSTEM_NAME STREQUAL "Windows" AND CMAKE_SYSTEM_NAME STREQUAL "Windows")
+    if (LIBRARY_BUILD_SHARED)
+        set(BUILD_WITH_STATIC_CRT_VALUE OFF)
+    else ()
+        set(BUILD_WITH_STATIC_CRT_VALUE ON)
+    endif ()
+    MESSAGE(STATUS "Configuring ${LIBRARY_NAME}...")
+    EXECUTE_PROCESS(
+            COMMAND ${CMAKE_COMMAND}
+            -S ${LIBRARY_SOURCE_DIR}
+            -B ${LIBRARY_BUILD_DIR}
+            -DCMAKE_INSTALL_PREFIX=${LIBRARY_INSTALL_DIR}
+            -DCMAKE_BUILD_TYPE=${LIBRARY_BUILD_TYPE}
+            -DBUILD_EXAMPLES=OFF
+            -DBUILD_TESTS=OFF
+            -DBUILD_PERF_TESTS=OFF
+            -DBUILD_JAVA=OFF
+            -DBUILD_SHARED_LIBS=${LIBRARY_BUILD_SHARED}
+            -DBUILD_WITH_STATIC_CRT=${BUILD_WITH_STATIC_CRT_VALUE}
+            -DBUILD_opencv_world=OFF
+            -DBUILD_opencv_java=OFF
+            -DBUILD_opencv_java_bindings_generator=OFF
+            -DBUILD_opencv_js=OFF
+            -DBUILD_opencv_js_bindings_generator=OFF
+            -DBUILD_opencv_objc_bindings_generator=OFF
+            -DBUILD_opencv_python_bindings_generator=OFF
+            -DBUILD_opencv_python_tests=OFF
+            COMMAND_ERROR_IS_FATAL ANY
+    )
+elseif (CMAKE_HOST_SYSTEM_NAME STREQUAL "Darwin" AND CMAKE_SYSTEM_NAME STREQUAL "Android")
+    EXECUTE_PROCESS(
+            COMMAND ${CMAKE_COMMAND}
+            -S ${LIBRARY_SOURCE_DIR}
+            -B ${LIBRARY_BUILD_DIR}
+            -G Ninja
+            -DCMAKE_TOOLCHAIN_FILE=${CMAKE_TOOLCHAIN_FILE}
+            -DANDROID_PLATFORM=${ANDROID_PLATFORM}
+            -DANDROID_ABI=${ANDROID_ABI}
+            -DCMAKE_BUILD_TYPE=${CMAKE_BUILD_TYPE}
+            -DCMAKE_INSTALL_PREFIX=${LIBRARY_INSTALL_DIR}
+            -DBUILD_SHARED_LIBS=${LIBRARY_BUILD_SHARED}
+            -DBUILD_ANDROID_PROJECTS=OFF
+            -DBUILD_ANDROID_EXAMPLES=OFF
+            -DBUILD_KOTLIN_EXTENSIONS=OFF
+            -DBUILD_FAT_JAVA_LIB=OFF
+            -DBUILD_EXAMPLES=OFF
+            -DBUILD_TESTS=OFF
+            -DBUILD_PERF_TESTS=OFF
+            -DBUILD_JAVA=OFF
+            COMMAND_ERROR_IS_FATAL ANY
+    )
 endif ()
 
-MESSAGE(STATUS "Configuring ${LIBRARY_NAME}...")
-EXECUTE_PROCESS(
-        COMMAND ${CMAKE_COMMAND}
-        -S ${LIBRARY_SOURCE_DIR}
-        -B ${LIBRARY_BUILD_DIR}
-        -DCMAKE_INSTALL_PREFIX=${LIBRARY_INSTALL_DIR}
-        -DCMAKE_BUILD_TYPE=${LIBRARY_BUILD_TYPE}
-        -DBUILD_EXAMPLES=OFF
-        -DBUILD_TESTS=OFF
-        -DBUILD_PERF_TESTS=OFF
-        -DBUILD_JAVA=OFF
-        -DBUILD_SHARED_LIBS=${LIBRARY_BUILD_SHARED}
-        -DBUILD_WITH_STATIC_CRT=${BUILD_WITH_STATIC_CRT_VALUE}
-        -DBUILD_opencv_world=OFF
-        -DBUILD_opencv_java=OFF
-        -DBUILD_opencv_java_bindings_generator=OFF
-        -DBUILD_opencv_js=OFF
-        -DBUILD_opencv_js_bindings_generator=OFF
-        -DBUILD_opencv_objc_bindings_generator=OFF
-        -DBUILD_opencv_python_bindings_generator=OFF
-        -DBUILD_opencv_python_tests=OFF
-        COMMAND_ERROR_IS_FATAL ANY
-)
 MESSAGE(STATUS "Building ${LIBRARY_NAME}...")
 EXECUTE_PROCESS(
         COMMAND ${CMAKE_COMMAND} --build ${LIBRARY_BUILD_DIR} --config ${LIBRARY_BUILD_TYPE}
