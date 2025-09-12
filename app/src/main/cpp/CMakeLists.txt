@@ -16,6 +16,14 @@ build_package(
         BUILD_TYPE Debug
         BUILD_SHARED ON
 )
+build_package(
+        NAME paddleocr_cpp_infer
+        GIT_REPOSITORY "https://github.com/PaddlePaddle/PaddleOCR"
+        GIT_TAG v2.10.0
+        BUILD_SCRIPT ${CMAKE_CURRENT_SOURCE_DIR}/cmake/BuildOcrCppInfer.cmake
+        BUILD_TYPE Debug
+        BUILD_SHARED OFF
+)
 add_library(${CMAKE_PROJECT_NAME} SHARED samples.cpp)
 target_link_libraries(${CMAKE_PROJECT_NAME} android log)
 target_compile_features(${CMAKE_PROJECT_NAME} PRIVATE cxx_std_20)
@@ -27,27 +35,10 @@ target_link_libraries(${CMAKE_PROJECT_NAME} ${OpenCV_LIBS})
 find_package(onnxruntime NO_CMAKE_FIND_ROOT_PATH REQUIRED)
 target_link_libraries(${CMAKE_PROJECT_NAME} onnxruntime::onnxruntime)
 
+find_package(paddleocr_cpp_infer NO_CMAKE_FIND_ROOT_PATH REQUIRED)
+target_link_libraries(${CMAKE_PROJECT_NAME} paddleocr_cpp_infer::paddleocr_cpp_infer)
+
 include(FetchContent)
-FetchContent_Populate(
-        paddleocr_cpp_infer
-        GIT_REPOSITORY "https://github.com/PaddlePaddle/PaddleOCR"
-        GIT_TAG v2.10.0
-        GIT_SHALLOW TRUE
-        SOURCE_DIR ${paddleocr_cpp_infer_SOURCE_DIR})
-add_library(paddleocr_cpp_infer STATIC
-        ${paddleocr_cpp_infer_SOURCE_DIR}/deploy/cpp_infer/include/postprocess_op.h
-        ${paddleocr_cpp_infer_SOURCE_DIR}/deploy/cpp_infer/include/preprocess_op.h
-        ${paddleocr_cpp_infer_SOURCE_DIR}/deploy/cpp_infer/include/clipper.h
-        ${paddleocr_cpp_infer_SOURCE_DIR}/deploy/cpp_infer/include/utility.h
-        ${paddleocr_cpp_infer_SOURCE_DIR}/deploy/cpp_infer/src/postprocess_op.cpp
-        ${paddleocr_cpp_infer_SOURCE_DIR}/deploy/cpp_infer/src/preprocess_op.cpp
-        ${paddleocr_cpp_infer_SOURCE_DIR}/deploy/cpp_infer/src/clipper.cpp
-        ${paddleocr_cpp_infer_SOURCE_DIR}/deploy/cpp_infer/src/utility.cpp)
-target_include_directories(paddleocr_cpp_infer PUBLIC
-        ${paddleocr_cpp_infer_SOURCE_DIR}/deploy/cpp_infer)
-target_link_libraries(paddleocr_cpp_infer PUBLIC ${OpenCV_LIBS})
-
-
 FetchContent_Populate(
         cmake-binary-resource
         GIT_REPOSITORY "https://github.com/wzcxbg/cmake-binary-resource"
@@ -63,5 +54,4 @@ add_binary_target(
                             models/rec/rec.onnx
                             models/rec/ppocr_keys_v1.txt)
 
-
-target_link_libraries(${CMAKE_PROJECT_NAME} models paddleocr_cpp_infer)
+target_link_libraries(${CMAKE_PROJECT_NAME} models)

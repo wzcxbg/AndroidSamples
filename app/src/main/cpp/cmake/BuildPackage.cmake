@@ -191,19 +191,21 @@ function(_build_package_impl _NAME _FETCH_CONTENT_ARGS _CONFIGURE_ARGS _BUILD_SC
     endif ()
 
     # 2. 如果没找到，进入自动构建和安装流程
-    include(FetchContent)
-    message(STATUS "${PRJ_NAME}")
-    message(STATUS "${_FETCH_CONTENT_ARGS}")
-    FetchContent_Populate(
-            "${PRJ_NAME}"
-            "${_FETCH_CONTENT_ARGS}"
-            SOURCE_DIR "${PRJ_NAME}-src"
-            BINARY_DIR "${PRJ_NAME}-build"
-    )
-    set(${PRJ_NAME}_SOURCE_DIR "${CMAKE_CURRENT_BINARY_DIR}/${PRJ_NAME}-src")
-    set(${PRJ_NAME}_BINARY_DIR "${CMAKE_CURRENT_BINARY_DIR}/${PRJ_NAME}-build")
-    message(STATUS "${PRJ_NAME}_SOURCE_DIR: ${${PRJ_NAME}_SOURCE_DIR}")
-    message(STATUS "${PRJ_NAME}_BINARY_DIR: ${${PRJ_NAME}_BINARY_DIR}")
+    set(${PRJ_NAME}_SOURCE_DIR "${CMAKE_SOURCE_DIR}/3rdparty/sources/${PRJ_NAME}-src")
+    set(${PRJ_NAME}_BINARY_DIR "${CMAKE_SOURCE_DIR}/3rdparty/sources/${PRJ_NAME}-build")
+    if (NOT EXISTS ${PRJ_NAME}_SOURCE_DIR OR NOT EXISTS ${PRJ_NAME}_BINARY_DIR)
+        include(FetchContent)
+        message(STATUS "${PRJ_NAME}")
+        message(STATUS "${_FETCH_CONTENT_ARGS}")
+        FetchContent_Populate(
+                "${PRJ_NAME}"
+                "${_FETCH_CONTENT_ARGS}"
+                SOURCE_DIR ${${PRJ_NAME}_SOURCE_DIR}
+                BINARY_DIR ${${PRJ_NAME}_BINARY_DIR}
+        )
+        message(STATUS "${PRJ_NAME}_SOURCE_DIR: ${${PRJ_NAME}_SOURCE_DIR}")
+        message(STATUS "${PRJ_NAME}_BINARY_DIR: ${${PRJ_NAME}_BINARY_DIR}")
+    endif ()
 
     # 3. 优先使用构建脚本构建
     if (_BUILD_SCRIPT)
