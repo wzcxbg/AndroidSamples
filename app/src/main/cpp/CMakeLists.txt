@@ -44,8 +44,9 @@ FetchContent_Populate(
         GIT_REPOSITORY "https://github.com/wzcxbg/cmake-binary-resource"
         GIT_TAG main
         GIT_SHALLOW TRUE
-        SOURCE_DIR ${cmake-binary-resource_SOURCE_DIR})
-include(${cmake-binary-resource_SOURCE_DIR}/CMakeLists.txt)
+        SOURCE_DIR ${CMAKE_CURRENT_SOURCE_DIR}/cmake/BinarySource)
+include(${CMAKE_CURRENT_SOURCE_DIR}/cmake/BinarySource/CMakeLists.txt)
+
 add_binary_target(
         TARGET_NAME         models
         TARGET_NAMESPACE    Res
