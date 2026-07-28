@@ -1,0 +1,32 @@
+add_library(
+        paddle_ocr_v6
+        STATIC
+        paddle_ocr.cpp
+        engine/detection_engine.cpp
+        engine/ocr_engine.cpp
+        engine/ort_session_manager.cpp
+        engine/recognition_engine.cpp
+        model/model_config.cpp
+        postprocess/box_sorter.cpp
+        postprocess/ctc_decoder.cpp
+        postprocess/db_post_processor.cpp
+        postprocess/polygon_unclip.cpp
+        postprocess/quad_geometry.cpp
+        postprocess/quad_text_crop.cpp
+        preprocess/det_preprocessor.cpp
+        preprocess/rec_preprocessor.cpp
+        util/image_utils.cpp
+        util/math_utils.cpp)
+
+target_compile_features(paddle_ocr_v6 PUBLIC cxx_std_20)
+target_include_directories(
+        paddle_ocr_v6
+        PUBLIC
+        ${CMAKE_CURRENT_SOURCE_DIR})
+target_link_libraries(
+        paddle_ocr_v6
+        PUBLIC
+        ${OpenCV_LIBS}
+        onnxruntime::onnxruntime
+        PRIVATE
+        paddle_ocr_v6_models)

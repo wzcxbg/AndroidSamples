@@ -24,7 +24,10 @@ build_package(
         BUILD_TYPE Debug
         BUILD_SHARED OFF
 )
-add_library(${CMAKE_PROJECT_NAME} SHARED samples.cpp)
+add_library(
+        ${CMAKE_PROJECT_NAME}
+        SHARED
+        samples.cpp)
 target_link_libraries(${CMAKE_PROJECT_NAME} android log)
 target_compile_features(${CMAKE_PROJECT_NAME} PRIVATE cxx_std_20)
 
@@ -56,3 +59,16 @@ add_binary_target(
                             models/rec/ppocr_keys_v1.txt)
 
 target_link_libraries(${CMAKE_PROJECT_NAME} models)
+
+add_binary_target(
+        TARGET_NAME         paddle_ocr_v6_models
+        TARGET_HEADER_FILE  paddle_ocr_v6_models.h
+        TARGET_NAMESPACE    PaddleOCRV6Resources
+        TARGET_CONTAINER    span
+        TARGET_VAR_BASE_DIR ${CMAKE_CURRENT_SOURCE_DIR}/paddle_ocr_v6/models
+        TARGET_BINARY_FILES paddle_ocr_v6/models/pp_ocr_v6_det.onnx
+                            paddle_ocr_v6/models/pp_ocr_v6_rec.onnx
+                            paddle_ocr_v6/models/pp_ocr_v6_chars.yml)
+
+add_subdirectory(paddle_ocr_v6)
+target_link_libraries(${CMAKE_PROJECT_NAME} paddle_ocr_v6)
